@@ -1,12 +1,11 @@
-curl -s https://cc8a649520a6bdf2b3a55a11f7e18a2011b66a2e@raw.githubusercontent.com/meesvdent/dose/master/models.py
 import numpy as np
 from scipy import integrate
 
 
 class OneCompModel(object):
-    X0 = [0]
     
     def __init__(self, doses, ke, kabs):
+        self.X0 = [0]
         self.doses = doses
         self.ke = ke
         self.kabs = kabs
@@ -41,3 +40,4 @@ class OneCompModel(object):
         X, infodict = integrate.odeint(self.dX_dt, self.X0, t, full_output=True)
         return X, infodict
 
+# update!!
