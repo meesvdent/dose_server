@@ -1,6 +1,6 @@
 import subprocess
-import subprocess
 
+import requests
 import numpy as np
 from django.http import HttpResponse
 from dose_model.dose_model.helpers import calc_dose_conc, trans_thalf_ke
@@ -21,13 +21,14 @@ def update_model(request):
 
 
 def calc_conc(request):
-    t = np.linspace(0, 24 * 3600, 24 * 3600)
 
-    dose = [0.160, 0.160]  # grams, seconds
-    time = [0.001, 7200]
+    t = np.linspace(0, 24 * 3600, 24 * 3600)
+    compound = request.GET.get("compound")
+    dose = request.GET.get("dosage")  # grams, seconds
+    time = request.GET.get("time")
     molecularMass = 194.19  # Caffeine
 
-    patientMass = 75  # kg
+    patientMass = request.GET.get("weight")  # kg
     DV = 0.625 * patientMass  # L/kg, for caffeine
     ke = trans_thalf_ke(4 * 3600)
     print(ke)
