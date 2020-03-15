@@ -7,7 +7,7 @@ from dose_model.dose_model.helpers import calc_dose_conc, trans_thalf_ke
 
 
 # Create your views here.
-update_model_sh = '/Users/meesvdent/Developer/dose_server/dose_model/static/dose_model/update_model.sh'
+update_model_sh = '../dose_model/static/dose_model/update_model.sh'
 
 
 def home(request):
