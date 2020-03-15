@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 
+
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dose_server.settings')
     try:
