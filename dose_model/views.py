@@ -1,13 +1,14 @@
-from django.shortcuts import render
 import subprocess
+import subprocess
+
 import numpy as np
 from django.http import HttpResponse
-from dose_model.dose_model.models import OneCompModel
 from dose_model.dose_model.helpers import calc_dose_conc, trans_thalf_ke
 
+from dose_model.dose_model.models import OneCompModel
 
 # Create your views here.
-update_model_sh = '/Users/meesvdent/Developer/dose_server/dose_model/static/dose_model/update_model.sh'
+update_model_sh = '../dose_model/static/dose_model/update_model.sh'
 
 
 def home(request):
