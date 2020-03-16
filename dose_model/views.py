@@ -2,7 +2,11 @@ import subprocess
 import numpy as np
 from django.http import HttpResponse
 from dose_model.dose_model.helpers import calc_dose_conc, trans_thalf_ke
+from django.shortcuts import render
+from rest_framework import viewsets
+from .serializers import CompoundSerializer
 from .models import Compound
+
 
 from dose_model.dose_model.models import OneCompModel
 
@@ -54,4 +58,9 @@ def calc_conc(request):
     X, infodict = model.integrate(t)
 
     return HttpResponse(X)
+
+
+class CompoundView(viewsets.ModelViewSet):  # add this
+    serializer_class = CompoundSerializer  # add this
+    queryset = Compound.objects.all()
 

@@ -8,7 +8,6 @@ class Compound(models.Model):
     t_half = models.FloatField()
     k_abs = models.FloatField()
     dv = models.FloatField()
-
     # define types of compounds
     focus = 'foc'
     power = 'pow'
@@ -17,7 +16,6 @@ class Compound(models.Model):
         (power, 'Power')
     )
     compound_type = models.CharField(max_length=3, choices=type_choices, default=focus)
-
     description = models.TextField()
     upload_date = models.DateTimeField(blank=True, null=True)
 
