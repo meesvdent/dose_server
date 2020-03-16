@@ -1,8 +1,8 @@
 import subprocess
-import pandas
 import numpy as np
 from django.http import HttpResponse
 from dose_model.dose_model.helpers import calc_dose_conc, trans_thalf_ke
+from .models import Compound
 
 from dose_model.dose_model.models import OneCompModel
 
@@ -34,19 +34,20 @@ def calc_conc(request):
     time = timestr.replace('"', '').split(",")
     time = list(map(int, time))
 
-    compounds = pandas.read_csv('./dose_model/dose_model/compounds.csv', sep=";", header=0)
+    cur_comp = Compound.objects.get(compound='Caffeine')
 
-    molecularMass = compounds.iloc[compound, 2]  # Caffeine
+    molecular_mass = cur_comp.mol_mass  # Caffeine
 
-    patientMass = float(request.GET.get("weight")) # kg
-    DV = compounds.iloc[compound, 1] * patientMass  # L/kg, for caffeine
-    ke = trans_thalf_ke(compounds.iloc[compound, 3] * 3600)
+    patient_mass = float(request.GET.get("weight"))  # kg
+    print(cur_comp.dv)
+    DV = cur_comp.dv * patient_mass  # L/kg, for caffeine
+    ke = trans_thalf_ke(cur_comp.t_half * 3600)
 
-    dose_conc = calc_dose_conc(dose, molecularMass, DV)
+    dose_conc = calc_dose_conc(dose, molecular_mass, DV)
     time_conc = [list(a) for a in zip(time, dose_conc)]
 
 
-    model = OneCompModel(time_conc, ke, compounds.iloc[compound, 4])
+    model = OneCompModel(time_conc, ke, cur_comp.k_abs)
     amount_unabs = model.calc_unabs(t)
     delta_abs = model.delta_abs(amount_unabs)
 
