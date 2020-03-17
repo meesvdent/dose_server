@@ -20,6 +20,8 @@ from dose_model import views
 
 router = routers.DefaultRouter()
 router.register(r'compound', views.CompoundView, 'compound')
+router.register(r'compoundtype', views.CompoundTypeView, 'compoundtype')
+router.register(r'concentrationmodel', views.ConcentrationModelView, 'concentrationmodel')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

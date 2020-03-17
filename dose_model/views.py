@@ -4,8 +4,9 @@ from django.http import HttpResponse
 from dose_model.dose_model.helpers import calc_dose_conc, trans_thalf_ke
 from django.shortcuts import render
 from rest_framework import viewsets
-from .serializers import CompoundSerializer
-from .models import Compound
+from .serializers import CompoundTypeSerializer, CompoundSerializer, ConcentrationModelSerializer
+from .models import CompoundType, Compound, ConcentrationModel
+import json
 
 
 from dose_model.dose_model.models import OneCompModel
@@ -24,43 +25,41 @@ def update_model(request):
 
 
 def calc_conc(request):
-
-    t = np.linspace(0, 24 * 3600, 24 * 3600)
-
-    compound = int(request.GET.get("compound"))
-    dosestring = request.GET.get("dosage")  # grams, seconds
-    dosestr = dosestring.replace(']', '').replace('[', '')
-    dose = dosestr.replace('"', '').split(",")
+    # GET parameters from request
+    # compound
+    compound = request.GET.get("compound")
+    print(compound)
+    # dose
+    dose = json.loads((request.GET.get("dosage")))  # grams, seconds
     dose = list(map(float, dose))
-
-    timestring = request.GET.get("time")
-    timestr = timestring.replace(']', '').replace('[', '')
-    time = timestr.replace('"', '').split(",")
+    print("DOSE", dose)
+    # time
+    time = json.loads(request.GET.get("time"))
     time = list(map(int, time))
+    # patient mass
+    mass = float(request.GET.get("weight"))
 
-    cur_comp = Compound.objects.get(compound='Caffeine')
-
-    molecular_mass = cur_comp.mol_mass  # Caffeine
-
-    patient_mass = float(request.GET.get("weight"))  # kg
-    print(cur_comp.dv)
-    DV = cur_comp.dv * patient_mass  # L/kg, for caffeine
-    ke = trans_thalf_ke(cur_comp.t_half * 3600)
-
-    dose_conc = calc_dose_conc(dose, molecular_mass, DV)
-    time_conc = [list(a) for a in zip(time, dose_conc)]
-
-
-    model = OneCompModel(time_conc, ke, cur_comp.k_abs)
-    amount_unabs = model.calc_unabs(t)
-    delta_abs = model.delta_abs(amount_unabs)
-
-    X, infodict = model.integrate(t)
+    # feed params into ConcentrationModel object and calculate concentration
+    cur_model = ConcentrationModel()
+    cur_model = ConcentrationModel.create_cur_model(cur_model, doses=dose, time=time, mass=mass, compound=compound)
+    print("calc_conc")
+    cur_model = cur_model.calc_conc_model()
+    X = json.loads(cur_model.conc)
+    print(X)
+    cur_model.save()
 
     return HttpResponse(X)
 
 
-class CompoundView(viewsets.ModelViewSet):  # add this
-    serializer_class = CompoundSerializer  # add this
+class CompoundTypeView(viewsets.ModelViewSet):
+    serializer_class = CompoundTypeSerializer
+    queryset = CompoundType.objects.all()
+
+class CompoundView(viewsets.ModelViewSet):
+    serializer_class = CompoundSerializer
     queryset = Compound.objects.all()
+
+class ConcentrationModelView(viewsets.ModelViewSet):
+    serializer_class = ConcentrationModelSerializer
+    queryset = ConcentrationModel.objects.all()
 

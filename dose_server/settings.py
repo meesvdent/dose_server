@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'dose_model'
+    'dose_model',
 ]
 
 MIDDLEWARE = [
