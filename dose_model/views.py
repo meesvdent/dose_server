@@ -1,8 +1,5 @@
 import subprocess
-import numpy as np
-from django.http import HttpResponse
-from dose_model.dose_model.helpers import calc_dose_conc, trans_thalf_ke
-from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets
 from .serializers import CompoundTypeSerializer, CompoundSerializer, ConcentrationModelSerializer
 from .models import CompoundType, Compound, ConcentrationModel
@@ -28,11 +25,9 @@ def calc_conc(request):
     # GET parameters from request
     # compound
     compound = request.GET.get("compound")
-    print(compound)
     # dose
     dose = json.loads((request.GET.get("dosage")))  # grams, seconds
     dose = list(map(float, dose))
-    print("DOSE", dose)
     # time
     time = json.loads(request.GET.get("time"))
     time = list(map(int, time))
@@ -42,13 +37,13 @@ def calc_conc(request):
     # feed params into ConcentrationModel object and calculate concentration
     cur_model = ConcentrationModel()
     cur_model = ConcentrationModel.create_cur_model(cur_model, doses=dose, time=time, mass=mass, compound=compound)
-    print("calc_conc")
     cur_model = cur_model.calc_conc_model()
     X = json.loads(cur_model.conc)
-    print(X)
     cur_model.save()
 
-    return HttpResponse(X)
+    serializer = ConcentrationModelSerializer(cur_model)
+
+    return JsonResponse(serializer.data, safe=False)
 
 
 class CompoundTypeView(viewsets.ModelViewSet):

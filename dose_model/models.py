@@ -4,7 +4,6 @@ from django.utils import timezone
 from dose_model.dose_model.models import OneCompModel
 import json
 from .dose_model.helpers import calc_dose_conc, trans_thalf_ke
-from datetime import datetime
 
 class CompoundType(models.Model):
     type = models.CharField(max_length=200)
@@ -27,6 +26,7 @@ class Compound(models.Model):
     dv = models.FloatField()
     compound_type = models.ManyToManyField(CompoundType)
     description = models.TextField()
+    photo = models.ImageField(upload_to="dose_server/dose_model/static/dose_model/structure_images/", null=True, blank=True)
     upload_date = models.DateTimeField(blank=True, null=True)
 
     def publish(self):
@@ -74,12 +74,14 @@ class ConcentrationModel(models.Model):
         ke = trans_thalf_ke(cur_compound.t_half)
 
         time_conc = [list(a) for a in zip(time, dose_conc)]
+
         temp_model = OneCompModel(time_conc, ke, cur_compound.k_abs)
         amount_unabs = temp_model.calc_unabs(t)
         delta_abs = temp_model.delta_abs(amount_unabs)
         X, infodict = temp_model.integrate(t)
         self.conc = json.dumps(X.tolist())
         self.save()
+
         return self
 
 
