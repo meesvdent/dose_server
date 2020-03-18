@@ -1,9 +1,9 @@
 from django.db import models
 import numpy as np
 from django.utils import timezone
-from dose_model.dose_model.models import OneCompModel
+from dose_model.kinetics_models import OneCompModel
 import json
-from .dose_model.helpers import calc_dose_conc, trans_thalf_ke
+from dose_model.helpers import calc_dose_conc, trans_thalf_ke
 
 class CompoundType(models.Model):
     type = models.CharField(max_length=200)
@@ -65,7 +65,6 @@ class ConcentrationModel(models.Model):
         doses = self.doses
         doses = doses.strip('][').split(', ')
         doses = [float(dose) for dose in doses]
-        print(doses)
         cur_compound = Compound.objects.get(compound=self.compound)
         dv = cur_compound.dv * self.mass
 
@@ -75,11 +74,13 @@ class ConcentrationModel(models.Model):
 
         time_conc = [list(a) for a in zip(time, dose_conc)]
 
+        print("time_conc: ", time_conc, ",ke: ", ke, ",cur_compound: ", cur_compound.k_abs)
         temp_model = OneCompModel(time_conc, ke, cur_compound.k_abs)
         amount_unabs = temp_model.calc_unabs(t)
         delta_abs = temp_model.delta_abs(amount_unabs)
         X, infodict = temp_model.integrate(t)
-        self.conc = json.dumps(X.tolist())
+        X = [number[0] for number in X]
+        self.conc = json.dumps(X)
         self.save()
 
         return self

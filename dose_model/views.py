@@ -6,10 +6,6 @@ from .models import CompoundType, Compound, ConcentrationModel
 import json
 
 
-from dose_model.dose_model.models import OneCompModel
-
-# Create your views here.
-update_model_sh = '../dose_model/static/dose_model/update_model.sh'
 
 
 def home(request):
@@ -17,8 +13,9 @@ def home(request):
 
 
 def update_model(request):
+    update_model_sh = './update_model.sh'
     subprocess.Popen([update_model_sh], shell=True)
-    return HttpResponse("models.py updated!")
+    return HttpResponse("kinetics_models.py updated!")
 
 
 def calc_conc(request):

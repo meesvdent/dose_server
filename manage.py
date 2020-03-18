@@ -19,5 +19,5 @@ def main():
 
 
 if __name__ == '__main__':
-    subprocess.call(['./dose_model/static/update_model.sh'])
+    subprocess.call(['./dose_model/update_model.sh'])
     main()
