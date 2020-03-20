@@ -123,6 +123,10 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
+
+#STATIC_ROOT = os.path.join(BASE_DIR, "static/assets/")
+
+
 # Override settings.py with localsettings.py when on local
 try:
     from .local_settings import *

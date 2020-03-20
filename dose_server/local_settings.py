@@ -124,9 +124,5 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
-# Override settings.py with localsettings.py when on local
+#STATIC_ROOT = os.path.join(BASE_DIR, "static/assets/")
 
-try:
-    from local_settings import *
-except ImportError as e:
-    pass

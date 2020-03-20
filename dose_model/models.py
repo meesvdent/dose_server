@@ -26,7 +26,7 @@ class Compound(models.Model):
     dv = models.FloatField()
     compound_type = models.ManyToManyField(CompoundType)
     description = models.TextField()
-    photo = models.ImageField(upload_to="dose_server/dose_model/static/dose_model/structure_images/", null=True, blank=True)
+    photo = models.ImageField(upload_to="./static/dose_model/structure_images/", null=True, blank=True)
     upload_date = models.DateTimeField(blank=True, null=True)
 
     def publish(self):
