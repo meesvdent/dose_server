@@ -16,15 +16,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
-from dose_model import views
+from dose_model import views as dose_model_views
 
 router = routers.DefaultRouter()
-router.register(r'compound', views.CompoundView, 'compound')
-router.register(r'compoundtype', views.CompoundTypeView, 'compoundtype')
-router.register(r'concentrationmodel', views.ConcentrationModelView, 'concentrationmodel')
+router.register(r'compound', dose_model_views.CompoundView, 'compound')
+router.register(r'compoundtype', dose_model_views.CompoundTypeView, 'compoundtype')
+router.register(r'concentrationmodel', dose_model_views.ConcentrationModelView, 'concentrationmodel')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('dose_model.urls')),
+    path('plot/', include('plot_dose.urls')),
     path('api/', include(router.urls))
 ]

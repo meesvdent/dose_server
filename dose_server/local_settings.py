@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'djecrety',
-    'dose_model'
+    'chartjs',
+    'dose_model',
+    'plot_dose',
 ]
 
 MIDDLEWARE = [

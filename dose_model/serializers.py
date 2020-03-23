@@ -15,4 +15,4 @@ class CompoundSerializer(serializers.ModelSerializer):
 class ConcentrationModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcentrationModel
-        fields = ('doses', 'time', 'mass', 'compound', 'conc')
+        fields = ('doses', 'time', 'mass', 'compound', 'time_field', 'conc')

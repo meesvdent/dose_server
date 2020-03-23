@@ -3,6 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets
 from .serializers import CompoundTypeSerializer, CompoundSerializer, ConcentrationModelSerializer
 from .models import CompoundType, Compound, ConcentrationModel
+import dateutil.parser
 import json
 
 
@@ -23,11 +24,10 @@ def calc_conc(request):
     # compound
     compound = request.GET.get("compound")
     # dose
-    dose = json.loads((request.GET.get("dosage")))  # grams, seconds
-    dose = list(map(float, dose))
+    dose = float(request.GET.get("dosage"))  # grams, seconds
     # time
-    time = json.loads(request.GET.get("time"))
-    time = list(map(int, time))
+    time = request.GET.get("time")
+    time = dateutil.parser.parse(time)
     # patient mass
     mass = float(request.GET.get("weight"))
 
@@ -36,7 +36,6 @@ def calc_conc(request):
     cur_model = ConcentrationModel.create_cur_model(cur_model, doses=dose, time=time, mass=mass, compound=compound)
     cur_model = cur_model.calc_conc_model()
     X = json.loads(cur_model.conc)
-    cur_model.save()
 
     serializer = ConcentrationModelSerializer(cur_model)
 
@@ -47,9 +46,11 @@ class CompoundTypeView(viewsets.ModelViewSet):
     serializer_class = CompoundTypeSerializer
     queryset = CompoundType.objects.all()
 
+
 class CompoundView(viewsets.ModelViewSet):
     serializer_class = CompoundSerializer
     queryset = Compound.objects.all()
+
 
 class ConcentrationModelView(viewsets.ModelViewSet):
     serializer_class = ConcentrationModelSerializer

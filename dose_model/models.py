@@ -5,6 +5,7 @@ from dose_model.kinetics_models import OneCompModel
 import json
 from dose_model.helpers import calc_dose_conc, trans_thalf_ke
 
+
 class CompoundType(models.Model):
     type = models.CharField(max_length=200)
     description = models.TextField()
@@ -24,7 +25,7 @@ class Compound(models.Model):
     t_half = models.FloatField()
     k_abs = models.FloatField()
     dv = models.FloatField()
-    compound_type = models.ManyToManyField(CompoundType)
+    compound_type = models.ManyToManyField(CompoundType, related_name='compound')
     description = models.TextField()
     photo = models.ImageField(upload_to="./static/dose_model/structure_images/", null=True, blank=True)
     upload_date = models.DateTimeField(blank=True, null=True)
@@ -38,51 +39,48 @@ class Compound(models.Model):
 
 
 class ConcentrationModel(models.Model):
-    doses = models.CharField(max_length=24*3600*100)
-    time = models.CharField(max_length=24*3600*100)
+    doses = models.FloatField()
+    time = models.DateTimeField()
     mass = models.FloatField()
     compound = models.ForeignKey(Compound, on_delete=models.CASCADE, null=True)
-    conc = models.CharField(max_length=24*3600*100)
+    conc = models.CharField(max_length=1000000000)
+    time_field = models.CharField(max_length=1000000000)
+    #TODO: user/session
 
     def create_cur_model(self, doses, time, compound, mass):
-        self.doses = json.dumps(doses)
-        self.time = json.dumps(time)
+        self.doses = doses
+        self.time = time
         self.mass = mass
         self.save()
 
         compound_inst = Compound.objects.get(compound=compound)
         self.compound = compound_inst
-        self.save()
+        self.save(update_fields=['compound'])
 
         return self
 
 
     def calc_conc_model(self):
-        t = np.linspace(0, 24 * 3600, 24 * 3600)
+
         time = self.time
-        time = time.strip('][').split(', ')
-        time = [float(tim) for tim in time]
         doses = self.doses
-        doses = doses.strip('][').split(', ')
-        doses = [float(dose) for dose in doses]
+
         cur_compound = Compound.objects.get(compound=self.compound)
-        dv = cur_compound.dv * self.mass
+        dv = float(cur_compound.dv * self.mass)
 
-        dose_conc = calc_dose_conc(doses, float(cur_compound.mol_mass), float(dv))
-
-        ke = trans_thalf_ke(cur_compound.t_half)
-
-        time_conc = [list(a) for a in zip(time, dose_conc)]
-
-        print("time_conc: ", time_conc, ",ke: ", ke, ",cur_compound: ", cur_compound.k_abs)
+        # model for t-start until 6 * halflife: 0.015625 left
+        t = np.linspace(0, 6 * cur_compound.t_half * 3600, 100)
+        dose_conc = calc_dose_conc([doses], float(cur_compound.mol_mass), dv)
+        ke = trans_thalf_ke(cur_compound.t_half * 3600)
+        time_conc = [list(a) for a in zip([0], dose_conc)]
         temp_model = OneCompModel(time_conc, ke, cur_compound.k_abs)
         amount_unabs = temp_model.calc_unabs(t)
         delta_abs = temp_model.delta_abs(amount_unabs)
         X, infodict = temp_model.integrate(t)
         X = [number[0] for number in X]
         self.conc = json.dumps(X)
-        self.save()
-
+        self.time_field = [time + timezone.timedelta(seconds=s) for s in t]
+        self.save(update_fields=['conc', 'time_field'])
         return self
 
 
