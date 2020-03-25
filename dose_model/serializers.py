@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import CompoundType, Compound, ConcentrationModel
+from .models import CompoundType, Compound, Dose, PlasmaConcentration
+
 
 class CompoundTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,7 +13,16 @@ class CompoundSerializer(serializers.ModelSerializer):
         model = Compound
         fields = ('compound', 'compound_type', 'mol_mass', 't_half', 'k_abs', 'dv', 'description', 'upload_date')
 
-class ConcentrationModelSerializer(serializers.ModelSerializer):
+
+class DoseModelSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ConcentrationModel
-        fields = ('doses', 'time', 'mass', 'compound', 'time_field', 'conc')
+        model = Dose
+        fields = ('dose', 'time', 'mass', 'compound')
+
+
+class PlasmaConcentrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlasmaConcentration
+        fields = ('dose', 'time', 'conc')
+
+

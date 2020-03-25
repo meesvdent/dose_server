@@ -1,5 +1,17 @@
 <form action="/plot/dose_form/" method="post">
     {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Submit">
+    {{ compound_type }}
+    <button type="submit" name="btnform1">Save Changes</button>
+</form>
+
+<form action="/plot/dose_form/" method="post">
+    {% csrf_token %}
+    {{ dose_form }}
+    <button type="submit" name="btnform2">Save Changes</button>
+</form>
+
+<form action="/plot/dose_form/" method="post">
+    {% csrf_token %}
+    {{ plasma_conc }}
+    <button type="submit" name="btnform3">Save Changes</button>
 </form>

@@ -2,7 +2,6 @@ from django.db import models
 import numpy as np
 from django.utils import timezone
 from dose_model.kinetics_models import OneCompModel
-import json
 from dose_model.helpers import calc_dose_conc, trans_thalf_ke
 
 
@@ -38,17 +37,15 @@ class Compound(models.Model):
         return self.compound
 
 
-class ConcentrationModel(models.Model):
-    doses = models.FloatField()
+class Dose(models.Model):
+    dose = models.FloatField()
     time = models.DateTimeField()
     mass = models.FloatField()
     compound = models.ForeignKey(Compound, on_delete=models.CASCADE, null=True)
-    conc = models.CharField(max_length=1000000000)
-    time_field = models.CharField(max_length=1000000000)
     #TODO: user/session
 
     def create_cur_model(self, doses, time, compound, mass):
-        self.doses = doses
+        self.dose = doses
         self.time = time
         self.mass = mass
         self.save()
@@ -63,13 +60,14 @@ class ConcentrationModel(models.Model):
     def calc_conc_model(self):
 
         time = self.time
-        doses = self.doses
+        doses = self.dose
 
         cur_compound = Compound.objects.get(compound=self.compound)
         dv = float(cur_compound.dv * self.mass)
 
         # model for t-start until 6 * halflife: 0.015625 left
-        t = np.linspace(0, 6 * cur_compound.t_half * 3600, 100)
+        resolution = 100 # per 4 * halflife
+        t = np.linspace(0, 4 * cur_compound.t_half * 3600, resolution)
         dose_conc = calc_dose_conc([doses], float(cur_compound.mol_mass), dv)
         ke = trans_thalf_ke(cur_compound.t_half * 3600)
         time_conc = [list(a) for a in zip([0], dose_conc)]
@@ -78,10 +76,22 @@ class ConcentrationModel(models.Model):
         delta_abs = temp_model.delta_abs(amount_unabs)
         X, infodict = temp_model.integrate(t)
         X = [number[0] for number in X]
-        self.conc = json.dumps(X)
-        self.time_field = [time + timezone.timedelta(seconds=s) for s in t]
-        self.save(update_fields=['conc', 'time_field'])
+
+        # save plasma concentrations in PlasmaConcentrationModel, related to current DoseModel instance
+        for i in range(len(X)):
+            conc = PlasmaConcentration(
+                dose=self,
+                time=(time + timezone.timedelta(seconds=i)),
+                conc=X[i])
+            conc.save()
+
         return self
+
+
+class PlasmaConcentration(models.Model):
+    dose = models.ForeignKey(Dose, on_delete=models.CASCADE, related_name="plasma_conc", null=True)
+    time = models.DateTimeField()
+    conc = models.FloatField()
 
 
 

@@ -1,10 +1,9 @@
 import subprocess
 from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets
-from .serializers import CompoundTypeSerializer, CompoundSerializer, ConcentrationModelSerializer
-from .models import CompoundType, Compound, ConcentrationModel
+from .serializers import CompoundTypeSerializer, CompoundSerializer, DoseModelSerializer, PlasmaConcentrationSerializer
+from .models import CompoundType, Compound, Dose
 import dateutil.parser
-import json
 
 
 
@@ -31,15 +30,19 @@ def calc_conc(request):
     # patient mass
     mass = float(request.GET.get("weight"))
 
-    # feed params into ConcentrationModel object and calculate concentration
-    cur_model = ConcentrationModel()
-    cur_model = ConcentrationModel.create_cur_model(cur_model, doses=dose, time=time, mass=mass, compound=compound)
+    # feed params into DoseModel object and calculate concentration
+    cur_model = Dose()
+    cur_model = Dose.create_cur_model(cur_model, doses=dose, time=time, mass=mass, compound=compound)
     cur_model = cur_model.calc_conc_model()
-    X = json.loads(cur_model.conc)
 
-    serializer = ConcentrationModelSerializer(cur_model)
+    # serialize cur_model
+    dose_serializer = DoseModelSerializer(cur_model)
 
-    return JsonResponse(serializer.data, safe=False)
+    # get conc from PlasmaConc database query referencing current dose
+    plasma_conc_query = cur_model.plasma_conc.all()
+    plasma_serializer = PlasmaConcentrationSerializer(plasma_conc_query, many=True)
+
+    return JsonResponse([dose_serializer.data, plasma_serializer.data], safe=False)
 
 
 class CompoundTypeView(viewsets.ModelViewSet):
@@ -53,6 +56,6 @@ class CompoundView(viewsets.ModelViewSet):
 
 
 class ConcentrationModelView(viewsets.ModelViewSet):
-    serializer_class = ConcentrationModelSerializer
-    queryset = ConcentrationModel.objects.all()
+    serializer_class = DoseModelSerializer
+    queryset = Dose.objects.all()
 
