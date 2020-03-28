@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from .forms import CompoundSubsetForm, DoseForm, PlasmaConcentrationForm
 from dose_model.models import Dose, Compound, PlasmaConcentration
-import json
 
 
 def get_compound_type(request):
@@ -28,11 +27,10 @@ def get_dose(request):
                 compound_queryset = Compound.objects.filter(compound_type__in=type_choice)
                 filtered_dose_form = DoseForm()
                 filtered_dose_form.fields["compound"].queryset = compound_queryset
-                compound_type = CompoundSubsetForm()
                 concentration_form = PlasmaConcentrationForm()
                 return render(
                     request, 'dose_form.html',
-                    {'compound_type': compound_type, 'dose_form': filtered_dose_form, 'plasma_conc': PlasmaConcentrationForm})
+                    {'compound_type': compound_type_form, 'dose_form': filtered_dose_form, 'plasma_conc': concentration_form})
             else:
                 print("not valid")
 
@@ -50,7 +48,6 @@ def get_dose(request):
                 cur_model = Dose()
                 cur_model.create_cur_model(doses=dose, time=time, compound=compound, mass=mass)
                 cur_model.calc_conc_model()
-
                 compound_type = CompoundSubsetForm()
                 dose_form = DoseForm()
                 plasma_form = PlasmaConcentrationForm()
@@ -62,9 +59,7 @@ def get_dose(request):
             conc_form = PlasmaConcentrationForm(request.POST)
             if conc_form.is_valid():
                 dose_choice = conc_form.cleaned_data['dose']
-                conc_choice = PlasmaConcentration.objects.filter(dose__in=dose_choice)
-                conc_values = conc_choice.values_list('time', 'conc')
-                print(conc_values)
+                return dose_chart(request, dose_choice)
             else:
                 print("not valid")
 
@@ -84,27 +79,26 @@ def get_dose(request):
         return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': PlasmaConcentrationForm})
 
 
-def dose_chart(request, conc, time, compound):
+def dose_chart(request, ids):
 
-    labels = time
-    data = json.loads(conc)
+    datasets = {}
+    for an_id in ids:
+        dose_query = Dose.objects.get(id=an_id)
 
-    # lines = {'dataset': []}
+        conc_query = PlasmaConcentration.objects.filter(dose=an_id)
 
-    # for unique_id in ids:
-    #     cur_conc_model = DoseModel.objects.get(id=unique_id)
-    #     print(cur_conc_model.time_field)
-    #     lines['dataset'].append({
-    #         'compound': str(cur_conc_model.compound),
-    #         'data': json.loads(cur_conc_model.conc),
-    #         'labels': cur_conc_model.time_field.strip('][').split(', ')
-    #     })
+        values = list(conc_query.values('time', 'conc'))
+        for coord_dict in values:
+            coord_dict['x'] = coord_dict.pop('time')
+            coord_dict['y'] = coord_dict.pop('conc')
+
+
+        print(dose_query.compound.color)
+        datasets[an_id] = {'compound': str(dose_query.compound), 'color': str(dose_query.compound.color), 'value': values}
+        print("datasets: ", datasets)
+
+
 
     return render(request, 'dose_chart.html', {
-        'labels': labels,
-        'data': data,
-        'compound': [str(compound)],
+        'data': datasets
     })
-
-
-

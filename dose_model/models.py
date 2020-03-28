@@ -27,6 +27,7 @@ class Compound(models.Model):
     compound_type = models.ManyToManyField(CompoundType, related_name='compound')
     description = models.TextField()
     photo = models.ImageField(upload_to="./static/dose_model/structure_images/", null=True, blank=True)
+    color = models.CharField(max_length=200)
     upload_date = models.DateTimeField(blank=True, null=True)
 
     def publish(self):
@@ -66,8 +67,8 @@ class Dose(models.Model):
         dv = float(cur_compound.dv * self.mass)
 
         # model for t-start until 6 * halflife: 0.015625 left
-        resolution = 100 # per 4 * halflife
-        t = np.linspace(0, 4 * cur_compound.t_half * 3600, resolution)
+        halflife_m = round(cur_compound.t_half * 60) # rounded half life in minutes
+        t = np.linspace(0, 5 * halflife_m * 60, 5 * halflife_m + 1)
         dose_conc = calc_dose_conc([doses], float(cur_compound.mol_mass), dv)
         ke = trans_thalf_ke(cur_compound.t_half * 3600)
         time_conc = [list(a) for a in zip([0], dose_conc)]
@@ -81,7 +82,7 @@ class Dose(models.Model):
         for i in range(len(X)):
             conc = PlasmaConcentration(
                 dose=self,
-                time=(time + timezone.timedelta(seconds=i)),
+                time=(time + timezone.timedelta(seconds=t[i])),
                 conc=X[i])
             conc.save()
 
