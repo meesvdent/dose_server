@@ -68,7 +68,7 @@ class Dose(models.Model):
 
         # model for t-start until 6 * halflife: 0.015625 left
         halflife_m = round(cur_compound.t_half * 60) # rounded half life in minutes
-        t = np.linspace(0, 5 * halflife_m * 60, 5 * halflife_m + 1)
+        t = np.linspace(0, 10 * halflife_m * 60, 10 * halflife_m + 1)
         dose_conc = calc_dose_conc([doses], float(cur_compound.mol_mass), dv)
         ke = trans_thalf_ke(cur_compound.t_half * 3600)
         time_conc = [list(a) for a in zip([0], dose_conc)]

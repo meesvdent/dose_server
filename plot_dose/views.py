@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .forms import CompoundSubsetForm, DoseForm, PlasmaConcentrationForm
 from dose_model.models import Dose, Compound, PlasmaConcentration
+import numpy as np
 
 
 def get_compound_type(request):
@@ -81,24 +82,54 @@ def get_dose(request):
 
 def dose_chart(request, ids):
 
-    datasets = {}
+    doses = {}
+
+    print("making dict")
+
     for an_id in ids:
         dose_query = Dose.objects.get(id=an_id)
 
         conc_query = PlasmaConcentration.objects.filter(dose=an_id)
 
-        values = list(conc_query.values('time', 'conc'))
-        for coord_dict in values:
+        coords = list(conc_query.values('time', 'conc'))
+        for coord_dict in coords:
             coord_dict['x'] = coord_dict.pop('time')
             coord_dict['y'] = coord_dict.pop('conc')
 
+        doses[an_id] = {
+            'compound': str(dose_query.compound),
+            'color': str(dose_query.compound.color),
+            'line': [10, 10],
+            'coords': coords}
 
-        print(dose_query.compound.color)
-        datasets[an_id] = {'compound': str(dose_query.compound), 'color': str(dose_query.compound.color), 'value': values}
-        print("datasets: ", datasets)
+    # Add up concentration from same compound at same tame (for same user)
 
+    cumulative = {}
+    for key, dose in doses.items():
 
+        if dose['compound'] not in cumulative.keys():
+            cumulative[dose['compound']] = {
+                'compound': dose['compound'],
+                'color': dose['color'],
+                'line': [],
+                'coords': []}
+
+        i = 0
+        for dose_coord_dict in dose['coords']:
+
+            if dose_coord_dict['x'] not in [cumulative_coord_dict['x'] for cumulative_coord_dict in cumulative[dose['compound']]['coords']]:
+                cumulative[dose['compound']]['coords'].append(dose_coord_dict)
+                i = i+1
+            else:
+                i = [cumulative_coord_dict['x'] for cumulative_coord_dict in cumulative[dose['compound']]['coords']].index(dose_coord_dict['x'])
+                cumulative_x = dose_coord_dict['x']
+                cumulative_y = dose_coord_dict['y'] + cumulative[dose['compound']]['coords'][i]['y']
+                cumulative_coord = {'x': cumulative_x, 'y': cumulative_y}
+                cumulative[dose['compound']]['coords'][i] = cumulative_coord
+                i = i+1
+
+    doses.update(cumulative)
 
     return render(request, 'dose_chart.html', {
-        'data': datasets
+        'data': doses
     })

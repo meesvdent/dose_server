@@ -26,7 +26,7 @@
                        {
                            label: "{{ value.compound }}",
                            data: [
-                               {% for item in value.value %}
+                               {% for item in value.coords %}
                                    {
                                        'x': new Date("{{ item.x.isoformat }}"),
                                        'y': {{ item.y }}
@@ -37,8 +37,9 @@
                            showLine: true,
                            borderColor: "{{ value.color }}",
                            backgroundColor: "{{ value.color }}",
+                           borderDash: {{ value.line }},
                            borderWidth: 3,
-                           pointRadius: 0
+                           pointRadius: 0,
                        },
                        {% endfor %}
                    ],
