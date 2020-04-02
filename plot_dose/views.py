@@ -26,12 +26,16 @@ def get_dose(request):
                 type_choice = [choice for choice in type_choice]
 
                 compound_queryset = Compound.objects.filter(compound_type__in=type_choice)
+
                 filtered_dose_form = DoseForm()
+                print(compound_queryset)
                 filtered_dose_form.fields["compound"].queryset = compound_queryset
-                concentration_form = PlasmaConcentrationForm()
+
+                filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
+
                 return render(
                     request, 'dose_form.html',
-                    {'compound_type': compound_type_form, 'dose_form': filtered_dose_form, 'plasma_conc': concentration_form})
+                    {'compound_type': compound_type_form, 'dose_form': filtered_dose_form, 'plasma_conc': filtered_concentration_form})
             else:
                 print("not valid")
 
@@ -49,15 +53,19 @@ def get_dose(request):
                 cur_model = Dose()
                 cur_model.create_cur_model(doses=dose, time=time, compound=compound, mass=mass)
                 cur_model.calc_conc_model()
+
+                request.session['doses'].append(cur_model.id)
+                request.session.modified = True
+
+                filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
+
                 compound_type = CompoundSubsetForm()
                 dose_form = DoseForm()
-                plasma_form = PlasmaConcentrationForm()
-
-                return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': plasma_form})
+                return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
 
         elif 'btnform3' in request.POST:
             print(request.POST)
-            conc_form = PlasmaConcentrationForm(request.POST)
+            conc_form = PlasmaConcentrationForm(request.session['doses'], request.POST, )
             if conc_form.is_valid():
                 dose_choice = conc_form.cleaned_data['dose']
                 return dose_chart(request, dose_choice)
@@ -70,14 +78,18 @@ def get_dose(request):
             print("nothing in there")
             dose_form = DoseForm()
             compound_type = CompoundSubsetForm()
-            return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': PlasmaConcentrationForm})
+            filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
+
+            return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
 
     # if a GET (or any other method) we'll create a blank form
     else:
         dose_form = DoseForm()
         compound_type = CompoundSubsetForm()
-
-        return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': PlasmaConcentrationForm})
+        if 'doses' not in request.session.keys():
+            request.session['doses'] = []
+        filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
+        return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
 
 
 def dose_chart(request, ids):

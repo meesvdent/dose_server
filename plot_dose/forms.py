@@ -10,7 +10,6 @@ class CompoundSubsetForm(ModelForm):
 
 
 class DoseForm(ModelForm):
-
     class Meta:
         model = Dose
         fields = ['compound', 'dose', 'time', 'mass']
@@ -20,9 +19,10 @@ class DoseForm(ModelForm):
 
 
 class PlasmaConcentrationForm(Form):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, ids, *args, **kwargs):
         super(PlasmaConcentrationForm, self).__init__(*args, **kwargs)
-        self.iquery = Dose.objects.values('id', 'compound', 'time')
+        self.iquery = Dose.objects.filter(id__in=ids)
+        self.iquery = self.iquery.values('id', 'compound', 'time')
 
         self.iquery_choices = []
         for i in range(len(self.iquery)):
@@ -35,7 +35,6 @@ class PlasmaConcentrationForm(Form):
     dose = MultipleChoiceField(
         choices=(),
         widget=CheckboxSelectMultiple,
-
     )
 
 
