@@ -34,7 +34,7 @@ def get_dose(request):
                 filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
 
                 return render(
-                    request, 'dose_form.html',
+                    request, 'plot_dose/dose_form.html',
                     {'compound_type': compound_type_form, 'dose_form': filtered_dose_form, 'plasma_conc': filtered_concentration_form})
             else:
                 print("not valid")
@@ -61,7 +61,7 @@ def get_dose(request):
 
                 compound_type = CompoundSubsetForm()
                 dose_form = DoseForm()
-                return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
+                return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
 
         elif 'btnform3' in request.POST:
             print(request.POST)
@@ -80,7 +80,7 @@ def get_dose(request):
             compound_type = CompoundSubsetForm()
             filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
 
-            return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
+            return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
 
     # if a GET (or any other method) we'll create a blank form
     else:
@@ -89,7 +89,7 @@ def get_dose(request):
         if 'doses' not in request.session.keys():
             request.session['doses'] = []
         filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
-        return render(request, 'dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
+        return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
 
 
 def dose_chart(request, ids):
@@ -142,6 +142,6 @@ def dose_chart(request, ids):
 
     doses.update(cumulative)
 
-    return render(request, 'dose_chart.html', {
+    return render(request, 'plot_dose/dose_chart.html', {
         'data': doses
     })
