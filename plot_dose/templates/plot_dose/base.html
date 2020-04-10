@@ -9,16 +9,51 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="{% static "plot_dose/css/main.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'plot_dose/css/main.css' %}">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
 
-    <title>Dose - plot</title>
+    <title>Dose</title>
 </head>
 <body>
 
+    <header class="site-header">
+        <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
+            <div class="container">
+              <a class="navbar-brand mr-4" href="{% url 'get_dose' %}">Dose</a>
+              <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse" id="navbarToggle">
+                <div class="navbar-nav mr-auto">
+                    <a class="nav-item nav-link" href="{% url 'get_dose' %}">Dose</a>
+                    <a class="nav-item nav-link" href="#">What is dose?</a>
+                    <a class="nav-item nav-link" href="#">Compounds</a>
+                </div>
+                <!-- Navbar Right Side -->
+                <div class="navbar-nav">
+                  {% if user.is_authenticated %}
+                    <a class="nav-item nav-link" href="{% url 'get_dose' %}">Profile</a>
+                    <a class="nav-item nav-link" href="{% url 'logout' %}">Logout</a>
+                  {% else %}
+                    <a class="nav-item nav-link" href="{% url 'login' %}">Login</a>
+                    <a class="nav-item nav-link" href="{% url 'register' %}">Register</a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+        </nav>
+    </header>
+
     <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
         {% block forms %}
         {% endblock %}
     </div>

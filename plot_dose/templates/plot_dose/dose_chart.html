@@ -1,83 +1,107 @@
-{% extends "plot_dose/dose_form.html" %}
+{% extends "plot_dose/base.html" %}
+{% load crispy_forms_tags %}
 
-{% block chart %}
+{% block forms %}
 
-    {{ block.super }}
+    <div class="row">
+        <div class="content-section col-4">
+            <form action="/plot/dose_form/" method="post">
+                {% csrf_token %}
+                {{ compound_type|crispy }}
+                <button type="submit" name="btnform1">Filter</button>
+            </form>
 
-      <canvas id="myChart" width="600" height="400"></canvas>
+            <form action="/plot/dose_form/" method="post">
+                {% csrf_token %}
+                    {{ dose_form|crispy }}
+                <button type="submit" name="btnform2">Add Dose</button>
+            </form>
 
-      <script>
+            <form action="/plot/dose_form/" method="post">
+                {% csrf_token %}
+                {{ plasma_conc|crispy }}
+                <button type="submit" name="btnform3">Plot Dose</button>
+            </form>
+        </div>
 
-          window.addEventListener('load', setup);
 
-          async function setup() {
-              const ctx = document.getElementById('myChart').getContext('2d');
-              const myChart = new Chart(ctx, {
-                   type: 'scatter',
-                   data: {
-                       datasets: [
-                           {% for key, value in data.items %}
-                           {
-                               label: "{{ value.compound }}",
-                               data: [
-                                   {% for item in value.coords %}
-                                       {
-                                           'x': new Date("{{ item.x.isoformat }}"),
-                                           'y': {{ item.y }}
-                                       },
-                                   {% endfor %}
-                               ],
-                               fill: false,
-                               showLine: true,
-                               borderColor: "{{ value.color }}",
-                               backgroundColor: "{{ value.color }}",
-                               borderDash: {{ value.line }},
-                               borderWidth: 3,
-                               pointRadius: 0,
-                           },
-                           {% endfor %}
-                       ],
-                   },
-                   options: {
-                    responsive: true,
-                    title: {
-                        display: true,
-                        text: 'Compound concentration'
-                    },
-                    scales: {
-                        xAxes: [{
-                            type: 'time',
+        <div class="row col-8">
+            <canvas id="myChart" width="600" height="600"></canvas>
+
+            <script>
+
+              window.addEventListener('load', setup);
+
+              async function setup() {
+                  const ctx = document.getElementById('myChart').getContext('2d');
+                  const myChart = new Chart(ctx, {
+                       type: 'scatter',
+                       data: {
+                           datasets: [
+                               {% for key, value in data.items %}
+                               {
+                                   label: "{{ value.compound }}",
+                                   data: [
+                                       {% for item in value.coords %}
+                                           {
+                                               'x': new Date("{{ item.x.isoformat }}"),
+                                               'y': {{ item.y }}
+                                           },
+                                       {% endfor %}
+                                   ],
+                                   fill: false,
+                                   showLine: true,
+                                   borderColor: "{{ value.color }}",
+                                   backgroundColor: "{{ value.color }}",
+                                   borderDash: {{ value.line }},
+                                   borderWidth: 3,
+                                   pointRadius: 0,
+                               },
+                               {% endfor %}
+                           ],
+                       },
+                       options: {
+                        responsive: true,
+                        title: {
                             display: true,
-                            unit: 'second',
-                            scaleLabel: {
+                            text: 'Compound concentration'
+                        },
+                        scales: {
+                            xAxes: [{
+                                type: 'time',
                                 display: true,
-                                labelString: 'Time'
-                            },
-                            gridLines: {
-                                drawOnChartArea: false
-                            },
-                            ticks: {
-                                major: {
-                                    fontStyle: 'bold',
-                                    fontColor: '#FF0000'
+                                unit: 'second',
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Time'
+                                },
+                                gridLines: {
+                                    drawOnChartArea: false
+                                },
+                                ticks: {
+                                    major: {
+                                        fontStyle: 'bold',
+                                        fontColor: '#FF0000'
+                                    }
                                 }
-                            }
-                        }],
-                        yAxes: [{
-                            display: true,
-                            scaleLabel: {
+                            }],
+                            yAxes: [{
                                 display: true,
-                                labelString: 'mol/L'
-                            },
-                            gridLines: {
-                                drawOnChartArea: false
-                            },
-                        }]
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'mol/L'
+                                },
+                                gridLines: {
+                                    drawOnChartArea: false
+                                },
+                            }]
+                        }
                     }
-                }
-                }
-                )
-          }
-        </script>
+                    }
+                    )
+              }
+            </script>
+        </div>
+    </div>
 
-{% endblock chart %}
+{% endblock forms %}

@@ -28,7 +28,6 @@ def get_dose(request):
                 compound_queryset = Compound.objects.filter(compound_type__in=type_choice)
 
                 filtered_dose_form = DoseForm()
-                print(compound_queryset)
                 filtered_dose_form.fields["compound"].queryset = compound_queryset
 
                 filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
@@ -64,7 +63,6 @@ def get_dose(request):
                 return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
 
         elif 'btnform3' in request.POST:
-            print(request.POST)
             conc_form = PlasmaConcentrationForm(request.session['doses'], request.POST, )
             if conc_form.is_valid():
                 dose_choice = conc_form.cleaned_data['dose']
@@ -75,7 +73,6 @@ def get_dose(request):
 
 
         else:
-            print("nothing in there")
             dose_form = DoseForm()
             compound_type = CompoundSubsetForm()
             filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
@@ -95,8 +92,6 @@ def get_dose(request):
 def dose_chart(request, ids):
 
     doses = {}
-
-    print("making dict")
 
     for an_id in ids:
         dose_query = Dose.objects.get(id=an_id)
@@ -142,6 +137,15 @@ def dose_chart(request, ids):
 
     doses.update(cumulative)
 
+    filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
+    compound_type = CompoundSubsetForm()
+    dose_form = DoseForm()
+
+    print(doses)
+
     return render(request, 'plot_dose/dose_chart.html', {
-        'data': doses
+        'data': doses,
+        'compound_type': compound_type,
+        'dose_form': dose_form,
+        'plasma_conc': filtered_concentration_form
     })

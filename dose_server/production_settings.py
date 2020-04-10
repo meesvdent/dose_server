@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'chartjs',
     'dose_model',
     'plot_dose',
+    'users.apps.UsersConfig',
+    'crispy_forms',
 ]
 
 MIDDLEWARE = [
@@ -126,6 +128,7 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 
-print(STATIC_ROOT)
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+LOGIN_REDIRECT_URL = 'get_dose'
 
 

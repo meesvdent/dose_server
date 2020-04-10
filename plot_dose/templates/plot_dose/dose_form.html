@@ -1,31 +1,27 @@
 {% extends "plot_dose/base.html" %}
+{% load crispy_forms_tags %}
 
 {% block forms %}
     <div class="row">
-        <div class="col-3">
+        <div class="content-section">
             <form action="/plot/dose_form/" method="post">
                 {% csrf_token %}
-                {{ compound_type }}
-                <button type="submit" name="btnform1">Save Changes</button>
+                {{ compound_type|crispy }}
+                <button type="submit" name="btnform1">Filter</button>
             </form>
 
             <form action="/plot/dose_form/" method="post">
                 {% csrf_token %}
-                {{ dose_form }}
-                <button type="submit" name="btnform2">Save Changes</button>
+                    {{ dose_form|crispy }}
+                <button type="submit" name="btnform2">Add Dose</button>
             </form>
 
             <form action="/plot/dose_form/" method="post">
                 {% csrf_token %}
-                {{ plasma_conc }}
-                <button type="submit" name="btnform3">Save Changes</button>
+                {{ plasma_conc|crispy }}
+                <button type="submit" name="btnform3">Plot Dose</button>
             </form>
-        </div>
-
-        <div class="col-9">
-            {% block chart %}{% endblock %}
         </div>
     </div>
-
 {% endblock forms %}
 
