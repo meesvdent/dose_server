@@ -1,11 +1,14 @@
 import subprocess
 from django.http import HttpResponse, JsonResponse
-from rest_framework import viewsets
-from .serializers import CompoundTypeSerializer, CompoundSerializer, DoseModelSerializer, PlasmaConcentrationSerializer
-from .models import CompoundType, Compound, Dose, PlasmaConcentration
-import dateutil.parser
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework import status
+from .serializers import CompoundTypeSerializer, CompoundSerializer, DoseModelSerializer, PlasmaConcentrationSerializer
+from .models import CompoundType, Compound, Dose
+from plot_dose.views import dose_chart_data
+import dateutil.parser
+from django.core.serializers.json import DjangoJSONEncoder
+import json
+
 
 
 def home(request):
@@ -58,19 +61,14 @@ class ConcentrationModelView(viewsets.ModelViewSet):
     serializer_class = DoseModelSerializer
     queryset = Dose.objects.all()
 
-    # def post(self, request, format=None):
-    #     print("post")
-    #     serializer = DoseModelSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         serializer.instance.calc_conc_model()
-    #
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def get_plasma_conc(request):
+    if request.method == "GET":
+        ids = request.GET.get('ids', None)
+        if ids is not None:
+            data = json.dumps(dose_chart_data(ids), cls=DjangoJSONEncoder)
+            return HttpResponse(data)
 
 
-class PlasmaConcentrationView(viewsets.ModelViewSet):
-    serializer_class = PlasmaConcentrationSerializer
-    queryset = PlasmaConcentration.objects.all()
 
 

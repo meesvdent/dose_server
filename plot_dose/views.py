@@ -90,6 +90,21 @@ def get_dose(request):
 
 def dose_chart(request, ids):
 
+    doses = dose_chart_data(ids)
+
+    filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
+    compound_type = CompoundSubsetForm()
+    dose_form = DoseForm()
+
+    return render(request, 'plot_dose/dose_chart.html', {
+        'data': doses,
+        'compound_type': compound_type,
+        'dose_form': dose_form,
+        'plasma_conc': filtered_concentration_form
+    })
+
+
+def dose_chart_data(ids):
     doses = {}
 
     for an_id in ids:
@@ -135,15 +150,5 @@ def dose_chart(request, ids):
                 i = i+1
 
     doses.update(cumulative)
-
-    filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
-    compound_type = CompoundSubsetForm()
-    dose_form = DoseForm()
-
-    return render(request, 'plot_dose/dose_chart.html', {
-        'data': doses,
-        'compound_type': compound_type,
-        'dose_form': dose_form,
-        'plasma_conc': filtered_concentration_form
-    })
+    return doses
 
