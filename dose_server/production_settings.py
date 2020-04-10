@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'plot_dose',
     'users.apps.UsersConfig',
     'crispy_forms',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [

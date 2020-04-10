@@ -2,10 +2,10 @@ import subprocess
 from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets
 from .serializers import CompoundTypeSerializer, CompoundSerializer, DoseModelSerializer, PlasmaConcentrationSerializer
-from .models import CompoundType, Compound, Dose
+from .models import CompoundType, Compound, Dose, PlasmaConcentration
 import dateutil.parser
-
-
+from rest_framework.response import Response
+from rest_framework import status
 
 
 def home(request):
@@ -33,7 +33,6 @@ def calc_conc(request):
     # feed params into DoseModel object and calculate concentration
     cur_model = Dose()
     cur_model = Dose.create_cur_model(cur_model, doses=dose, time=time, mass=mass, compound=compound)
-    cur_model = cur_model.calc_conc_model()
 
     # serialize cur_model
     dose_serializer = DoseModelSerializer(cur_model)
@@ -58,4 +57,20 @@ class CompoundView(viewsets.ModelViewSet):
 class ConcentrationModelView(viewsets.ModelViewSet):
     serializer_class = DoseModelSerializer
     queryset = Dose.objects.all()
+
+    # def post(self, request, format=None):
+    #     print("post")
+    #     serializer = DoseModelSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         serializer.instance.calc_conc_model()
+    #
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PlasmaConcentrationView(viewsets.ModelViewSet):
+    serializer_class = PlasmaConcentrationSerializer
+    queryset = PlasmaConcentration.objects.all()
+
 

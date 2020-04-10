@@ -9,6 +9,7 @@ router = routers.DefaultRouter()
 router.register(r'compound', dose_model_views.CompoundView, 'compound')
 router.register(r'compoundtype', dose_model_views.CompoundTypeView, 'compoundtype')
 router.register(r'concentrationmodel', dose_model_views.ConcentrationModelView, 'concentrationmodel')
+router.register(r'plasmaconcentrationmodel', dose_model_views.PlasmaConcentrationView, 'plasmaconcentrationmodel')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

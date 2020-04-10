@@ -55,6 +55,8 @@ class Dose(models.Model):
         self.compound = compound_inst
         self.save(update_fields=['compound'])
 
+        self.calc_conc_model()
+
         return self
 
 

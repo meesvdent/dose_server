@@ -51,7 +51,6 @@ def get_dose(request):
 
                 cur_model = Dose()
                 cur_model.create_cur_model(doses=dose, time=time, compound=compound, mass=mass)
-                cur_model.calc_conc_model()
 
                 request.session['doses'].append(cur_model.id)
                 request.session.modified = True
@@ -141,11 +140,10 @@ def dose_chart(request, ids):
     compound_type = CompoundSubsetForm()
     dose_form = DoseForm()
 
-    print(doses)
-
     return render(request, 'plot_dose/dose_chart.html', {
         'data': doses,
         'compound_type': compound_type,
         'dose_form': dose_form,
         'plasma_conc': filtered_concentration_form
     })
+
