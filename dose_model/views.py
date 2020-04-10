@@ -64,7 +64,7 @@ class ConcentrationModelView(viewsets.ModelViewSet):
 
 def get_plasma_conc(request):
     if request.method == "GET":
-        ids = request.GET.get('ids', None)
+        ids = json.loads(request.GET.get('ids', None))
         if ids is not None:
             data = json.dumps(dose_chart_data(ids), cls=DjangoJSONEncoder)
             return HttpResponse(data)
