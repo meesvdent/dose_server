@@ -85,7 +85,12 @@ def get_dose(request):
         if 'doses' not in request.session.keys():
             request.session['doses'] = []
         filtered_concentration_form = PlasmaConcentrationForm(request.session['doses'])
-        return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': filtered_concentration_form})
+        return render(request, 'plot_dose/dose_form.html',
+                      {
+                          'compound_type': compound_type,
+                          'dose_form': dose_form,
+                          'plasma_conc': filtered_concentration_form
+                      })
 
 
 def dose_chart(request, ids):
