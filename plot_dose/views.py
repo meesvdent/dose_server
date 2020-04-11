@@ -73,7 +73,7 @@ def get_dose(request):
                 print(doses)
                 doses.append(cur_model.id)
                 print(doses)
-                conc_form = PlasmaConcentrationForm(doses, request.POST)
+                conc_form = PlasmaConcentrationForm(doses)
 
                 return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': conc_form})
 
