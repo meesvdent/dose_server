@@ -12,7 +12,7 @@ class CompoundTypeSerializer(serializers.ModelSerializer):
 class CompoundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Compound
-        fields = ('compound', 'compound_type', 'mol_mass', 't_half', 'k_abs', 'dv', 'description', 'upload_date')
+        fields = ('id', 'compound', 'compound_type', 'mol_mass', 't_half', 'k_abs', 'dv', 'description', 'upload_date')
 
 
 class DoseModelSerializer(serializers.ModelSerializer):
