@@ -3,6 +3,7 @@ import numpy as np
 from django.utils import timezone
 from dose_model.kinetics_models import OneCompModel
 from dose_model.helpers import calc_dose_conc, trans_thalf_ke
+from django.contrib.auth.models import User
 
 
 class CompoundType(models.Model):
@@ -43,12 +44,13 @@ class Dose(models.Model):
     time = models.DateTimeField()
     mass = models.FloatField()
     compound = models.ForeignKey(Compound, on_delete=models.CASCADE, null=True)
-    #TODO: user/session
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
-    def create_cur_model(self, doses, time, compound, mass):
+    def create_cur_model(self, doses, time, compound, mass, user):
         self.dose = doses
         self.time = time
         self.mass = mass
+        self.user = user
         self.save()
 
         compound_inst = Compound.objects.get(compound=compound)
