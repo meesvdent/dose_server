@@ -18,7 +18,7 @@ class CompoundSerializer(serializers.ModelSerializer):
 class DoseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dose
-        fields = ('dose', 'time', 'mass', 'compound')
+        fields = ('id', 'dose', 'time', 'mass', 'compound')
 
     def create(self, validated_data):
         cur_dose = Dose.objects.create(**validated_data)
