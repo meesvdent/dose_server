@@ -62,24 +62,25 @@ def get_dose(request):
                 time = dose_form.cleaned_data['time']
                 compound = dose_form.cleaned_data['compound']
                 mass = dose_form.cleaned_data['mass']
-                user = request.user
 
                 cur_model = Dose()
+                if request.user.is_authenticated:
+                    user = request.user
+                else:
+                    user = None
+
                 cur_model.create_cur_model(doses=dose, time=time, compound=compound, mass=mass, user=user)
 
                 request.session['doses'].append(cur_model.id)
                 request.session.modified = True
 
-                print(doses)
                 doses.append(cur_model.id)
-                print(doses)
-                conc_form = PlasmaConcentrationForm(doses, request.POST)
+                conc_form = PlasmaConcentrationForm(doses)
 
                 return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': conc_form})
 
         elif 'btnform3' in request.POST:
-            conc_form = PlasmaConcentrationForm(doses, request.POST
-                                                )
+            conc_form = PlasmaConcentrationForm(doses, request.POST)
             if conc_form.is_valid():
                 dose_choice = conc_form.cleaned_data['dose']
                 return dose_chart(request, dose_choice, conc_form)
