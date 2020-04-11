@@ -4,7 +4,6 @@ from .forms import UserRegisterForm
 
 
 def register(request):
-    print('')
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
@@ -14,7 +13,6 @@ def register(request):
 
     else:
         form = UserRegisterForm()
-        print("form")
 
     return render(request, 'users/register.html', {'form': form})
 
