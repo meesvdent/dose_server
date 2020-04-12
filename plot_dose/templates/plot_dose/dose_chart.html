@@ -4,29 +4,9 @@
 {% block forms %}
 
     <div class="row">
-        <div class="content-section col-4">
-            <form action="/plot/dose_form/" method="post">
-                {% csrf_token %}
-                {{ compound_type|crispy }}
-                <button type="submit" name="btnform1">Filter</button>
-            </form>
 
-            <form action="/plot/dose_form/" method="post">
-                {% csrf_token %}
-                    {{ dose_form|crispy }}
-                <button type="submit" name="btnform2">Add Dose</button>
-            </form>
-
-            <form action="/plot/dose_form/" method="post">
-                {% csrf_token %}
-                {{ plasma_conc|crispy }}
-                <button type="submit" name="btnform3">Plot Dose</button>
-            </form>
-        </div>
-
-
-        <div class="row col-8">
-            <canvas id="myChart" width="600" height="600"></canvas>
+        <div class="content-section col-md-8">
+            <canvas id="myChart" width="400" height="400"></canvas>
 
             <script>
 
@@ -98,10 +78,24 @@
                         }
                     }
                     }
-                    )
+                  )
               }
             </script>
         </div>
+
+        <div class="content-section col-md-4">
+            <form action="/plot/dose_form/" method="post">
+                {% csrf_token %}
+                {{ plasma_conc|crispy }}
+                <button type="submit" name="btnform3", class="btn btn-secondary btn-lg btn-block">Update Plot</button>
+{#                <href class="btn btn-secondary btn-lg btn-block" href="{% url 'get_dose' %}" role="button">Add another dose</href>#}
+            </form>
+            <form action="/plot/dose_form/" method="get">
+                <input type="submit" class="btn btn-secondary btn-lg btn-block" value="Add a Dose" name="add_dose">
+            </form>
+        </div>
+
     </div>
+
 
 {% endblock forms %}

@@ -1,6 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .forms import CompoundSubsetForm, DoseForm, PlasmaConcentrationForm
 from dose_model.models import Dose, Compound, PlasmaConcentration
+from django.contrib import messages
 
 
 def get_compound_type(request):
@@ -83,15 +84,18 @@ def get_dose(request):
             conc_form = PlasmaConcentrationForm(doses, request.POST)
             if conc_form.is_valid():
                 dose_choice = conc_form.cleaned_data['dose']
+                print(dose_choice)
                 return dose_chart(request, dose_choice, conc_form)
             else:
-                print("not valid")
+                messages.error(request, "Add a dose to plot")
+                return render(request, 'plot_dose/dose_form.html',
+                              {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': conc_form})
+
         else:
             return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': conc_form})
 
     # if a GET (or any other method) we'll create a blank form
     else:
-
         return render(
             request,
             'plot_dose/dose_form.html',
