@@ -6,81 +6,197 @@
     <div class="row">
 
         <div class="content-section col-md-8">
-            <canvas id="myChart" width="400" height="400"></canvas>
+            <div class="chartWrapper">
+                <div class="chartAreaWrapper">
+                    <div class="chartAreaWrapper2">
+                        <canvas id="myChart"></canvas>
+                    </div>
+                </div>
+
+                <canvas id="myChartAxis" height="300" width="0"></canvas>
+            </div>
 
             <script>
 
-              window.addEventListener('load', setup);
+            var ctx = document.getElementById("myChart").getContext("2d");
+            var rectangleSet = false;
+            var canvasTest = $('#chart-Test');
 
-              async function setup() {
-                  const ctx = document.getElementById('myChart').getContext('2d');
-                  const myChart = new Chart(ctx, {
-                       type: 'scatter',
-                       data: {
-                           datasets: [
-                               {% for key, value in data.items %}
-                               {
-                                   label: "{{ value.compound }}",
-                                   data: [
-                                       {% for item in value.coords %}
-                                           {
-                                               'x': new Date("{{ item.x.isoformat }}"),
-                                               'y': {{ item.y }}
-                                           },
-                                       {% endfor %}
-                                   ],
-                                   fill: false,
-                                   showLine: true,
-                                   borderColor: "{{ value.color }}",
-                                   backgroundColor: "{{ value.color }}",
-                                   borderDash: {{ value.line }},
-                                   borderWidth: 3,
-                                   pointRadius: 0,
-                               },
+            const chart = {
+               type: 'scatter',
+               data: {
+                   datasets: [
+                       {% for key, value in data.items %}
+                       {
+                           label: "{{ value.compound }}",
+                           data: [
+                               {% for item in value.coords %}
+                                   {
+                                       'x': new Date("{{ item.x.isoformat }}"),
+                                       'y': {{ item.y }}
+                                   },
                                {% endfor %}
                            ],
+                           fill: false,
+                           showLine: true,
+                           borderColor: "{{ value.color }}",
+                           backgroundColor: "{{ value.color }}",
+                           borderDash: {{ value.line }},
+                           borderWidth: 3,
+                           pointRadius: 0,
                        },
-                       options: {
-                        responsive: true,
-                        title: {
-                            display: true,
-                            text: 'Compound concentration'
-                        },
-                        scales: {
-                            xAxes: [{
-                                type: 'time',
-                                display: true,
-                                unit: 'second',
-                                scaleLabel: {
-                                    display: true,
-                                    labelString: 'Time'
-                                },
-                                gridLines: {
-                                    drawOnChartArea: false
-                                },
-                                ticks: {
-                                    major: {
-                                        fontStyle: 'bold',
-                                        fontColor: '#FF0000'
-                                    }
-                                }
-                            }],
-                            yAxes: [{
-                                display: true,
-                                scaleLabel: {
-                                    display: true,
-                                    labelString: 'mol/L'
-                                },
-                                gridLines: {
-                                    drawOnChartArea: false
-                                },
-                            }]
-                        }
-                    }
-                    }
-                  )
-              }
+                       {% endfor %}
+                   ],
+               },
+               options: {
+                   responsive: true,
+                   title: {
+                       display: true,
+                        text: 'Compound concentration'
+                   },
+                   scales: {
+                       xAxes: [{
+                           type: 'time',
+                           display: true,
+                           unit: 'second',
+                           scaleLabel: {
+                               display: true,
+                               labelString: 'Time'
+                           },
+                           gridLines: {
+                               drawOnChartArea: false
+                           },
+                           ticks: {
+                               major: {
+                                   fontStyle: 'bold',
+                                   fontColor: '#FF0000'
+                               }
+                           }
+                       }],
+                       yAxes: [{
+                           display: true,
+                           scaleLabel: {
+                               display: true,
+                               labelString: 'mol/L'
+                           },
+                           gridLines: {
+                               drawOnChartArea: false
+                           },
+                       }]
+                   },
+                   maintainAspectRatio: false,
+                   animation: {
+                       onComplete: function () {
+                           if (!rectangleSet) {
+                               var scale = window.devicePixelRatio;
+                               var sourceCanvas = chartTest.chart.canvas;
+                               var copyWidth = chartTest.scales['y-axis-0'].width - 10;
+                               var copyHeight = chartTest.scales['y-axis-0'].height + chartTest.scales['y-axis-0'].top + 10;
+                               var targetCtx = document.getElementById("axis-Test").getContext("2d");
+                               targetCtx.scale(scale, scale);
+                               targetCtx.canvas.width = copyWidth * scale;
+                               targetCtx.canvas.height = copyHeight * scale;
+                               targetCtx.canvas.style.width = `${copyWidth}px`;
+                               targetCtx.canvas.style.height = `${copyHeight}px`;
+                               targetCtx.drawImage(sourceCanvas, 0, 0, copyWidth * scale, copyHeight * scale, 0, 0, copyWidth * scale, copyHeight * scale);
+
+                               var sourceCtx = sourceCanvas.getContext('2d');
+                               // Normalize coordinate system to use css pixels.
+                               sourceCtx.clearRect(0, 0, copyWidth * scale, copyHeight * scale);
+                               rectangleSet = true;
+                           }
+                       },
+                       onProgress: function () {
+                           if (rectangleSet === true) {
+                               var copyWidth = chartTest.scales['y-axis-0'].width;
+                               var copyHeight = chartTest.scales['y-axis-0'].height + chartTest.scales['y-axis-0'].top + 10;
+                               var sourceCtx = chartTest.chart.canvas.getContext('2d');
+                               sourceCtx.clearRect(0, 0, copyWidth, copyHeight);
+                           }
+                       }
+                   }
+               }
+            };
+
+            var myLiveChart = new Chart(ctx, chart);
+
             </script>
+
+        <div id="myButtons" class="btn-group btn-group-toggle special" data-toggle="buttons">
+            <label class="btn btn-secondary">
+                <input type="radio" name="options" id="12_hours" autocomplete="off" checked> 12 hours
+            </label>
+            <label class="btn btn-secondary">
+                <input type="radio" name="options" id="24_hours" autocomplete="off"> 24 hours
+            </label>
+            <label class="btn btn-secondary">
+                <input type="radio" name="options" id="7_days" autocomplete="off"> 7 days
+            </label>
+            <label class="btn btn-secondary">
+                <input type="radio" name="options" id="1_month" autocomplete="off"> 1 month
+            </label>
+        </div>
+
+            <script>
+                $("#myButtons :input").change(function() {
+                    {#var first = null;#}
+                    var firstDate = null;
+                    var lastDate = null;
+                    {% for key, value in data.items %}
+                        {% with first=value.coords|first %}
+                        {% with last=value.coords|last %}
+
+                        var firstRowDate = new Date("{{ first.x.isoformat }}");
+                        var lastRowDate = new Date("{{ last.x.isoformat }}")
+
+                        if(firstDate == null){
+                            firstDate = firstRowDate
+                        } else if(firstRowDate < firstDate){
+                            firstDate = firstRowDate
+                        }
+
+                        if(lastDate == null){
+                            lastDate = lastRowDate
+                        } else if(lastRowDate > lastDate){
+                            lastDate = lastRowDate
+                        }
+
+                        console.log(firstDate);
+                        console.log(lastDate);
+
+                        {% endwith %}
+                        {% endwith %}
+                    {% endfor %}
+
+                    const timeDiff = (lastDate.getTime() - firstDate.getTime())/(1000*3600*24);
+                    console.log(timeDiff);
+
+                    let newwidth = null;
+
+                    if(this['id'] == '12_hours'){
+                        newwidth = ((timeDiff*2))*100;
+                    }
+                    if(this['id'] == '24_hours'){
+                        newwidth = ((timeDiff))*100;
+                    }
+                    if(this['id'] == '7_days'){
+                        newwidth = ((timeDiff/7))*100;
+                    }
+                    if(this['id'] == '1_month'){
+                        newwidth = ((timeDiff/30))*100;
+                    }
+
+                    newwidth = newwidth.toString()
+                    newwidth = newwidth.concat("%")
+
+                    console.log(newwidth)
+
+                    $('.chartAreaWrapper2').width(newwidth);
+
+                });
+            </script>
+
+
         </div>
 
         <div class="content-section col-md-4">

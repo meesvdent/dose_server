@@ -82,3 +82,34 @@ a.article-title:hover {
 .account-heading {
   font-size: 2.5rem;
 }
+
+.chartWrapper {
+  position: relative;
+}
+
+.chartWrapper>canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.chartAreaWrapper {
+  overflow-x: scroll;
+  position: relative;
+  width: 100%;
+}
+
+.chartAreaWrapper2 {
+  width: 200%;
+  position: relative;
+  height: 600px;
+}
+
+.btn-group.special {
+  display: flex;
+}
+
+.special .btn {
+  flex: 1
+}

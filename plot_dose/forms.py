@@ -47,6 +47,11 @@ class PlasmaConcentrationForm(Form):
         widget=CheckboxSelectMultiple,
     )
 
+    class Meta:
+        labels = {
+            'dose': '',
+        }
+
 
 
 
