@@ -26,12 +26,12 @@ Modelling plasma concentration for different compounds and visualizing for users
     - Visualize certain time range: 'today', 'past week'
     - "now" line
         - https://stackoverflow.com/questions/30256695/chart-js-drawing-an-arbitrary-vertical-line
+    - add "0" values for times not in sum compounds for every sum compounds in range of at least 1 month
 - Implement user model: connect to dose so only your own doses show up.
     - automatically enter weight 
     - make profile model with weight
 - Host server on digital ocean droplet using Docker
 - Blog with posts about pharmacokinetics and the effect of different plasma concentration levels on brain functions ["Jerkes Dodson Law"](https://en.m.wikipedia.org/wiki/Yerkes%E2%80%93Dodson_law).
-
     
 
 ### Components  
@@ -40,7 +40,7 @@ Modelling plasma concentration for different compounds and visualizing for users
         - OneCompModel: first order kinetics
     - playground.py: off-server model testing
     - Get's fetched from github by server
-- Dose server (django)
+- Dose server (python-django)
     - Model: dose and compound parameters and gives list of concentration over time
     - Databases
         - CompoundType

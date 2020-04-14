@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from .forms import CompoundSubsetForm, DoseForm, PlasmaConcentrationForm
 from dose_model.models import Dose, Compound, PlasmaConcentration
 from django.contrib import messages
+import datetime
+from django.utils import timezone
 
 
 def get_compound_type(request):
@@ -155,11 +157,17 @@ def dose_chart_data(ids):
                 'compound': dose['compound'],
                 'color': dose['color'],
                 'line': [],
-                'coords': []}
+                'coords': [],
+                'first_date': timezone.now(),
+                'last_date': timezone.now()
+            }
 
         i = 0
         for dose_coord_dict in dose['coords']:
-
+            if dose_coord_dict['x'] < cumulative[dose['compound']]['first_date']:
+                cumulative[dose['compound']]['first_date'] = dose_coord_dict['x']
+            if dose_coord_dict['x'] > cumulative[dose['compound']]['last_date']:
+                cumulative[dose['compound']]['last_date'] = dose_coord_dict['x']
             if dose_coord_dict['x'] not in [cumulative_coord_dict['x'] for cumulative_coord_dict in cumulative[dose['compound']]['coords']]:
                 cumulative[dose['compound']]['coords'].append(dose_coord_dict)
                 i = i+1
@@ -171,6 +179,24 @@ def dose_chart_data(ids):
                 cumulative[dose['compound']]['coords'][i] = cumulative_coord
                 i = i+1
 
+    # # add zero values to empty dates in range and make minimal range 0-1 month
+    # for key, dose in cumulative.items():
+    #     dose['coords'] = sorted(dose['coords'], key = lambda k: k["x"])
+    #     days = (dose['last_date'] - dose['first_date']).total_seconds()/(3600*24)
+    #     days_difference = int(31 - days)
+    #     print(days_difference)
+    #
+    #     if days_difference > 0:
+    #         print(range(days_difference*24*3600))
+    #         add_dates = dose['first_date'] - datetime.timedelta(seconds=days_difference*24*3600)
+    #         print(add_dates)
+    #         dose['coords'] = [{'x': add_dates, 'y': 0}] + dose['coords']
+    #         print('added')
+
     doses.update(cumulative)
     return doses
+
+
+def test_chartjs_scroll(request):
+    return render(request, 'plot_dose/chart-js_scroll.html')
 
