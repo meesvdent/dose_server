@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import CompoundType, Compound, Dose, PlasmaConcentration
-
+from .models import Dose, PlasmaConcentration
+from compounds.models import CompoundType, Compound
 
 
 class CompoundTypeSerializer(serializers.ModelSerializer):

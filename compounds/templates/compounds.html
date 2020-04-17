@@ -1,0 +1,28 @@
+{% extends 'plot_dose/base.html' %}
+{% include compounds %}
+
+{% block forms %}
+
+    {% for dict in compound_types %}
+        <div>
+            <legend class="border-bottom mb-4">{{ dict.type }}</legend>
+            <div class="row content-section">
+                {% for key, value in dict.compounds.items %}
+                    <div class="col-sm-4">
+                        <div class="card">
+                            <img src="/media/{{ value.photo }}" alt="">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ value.compound }}</h5>
+                                <p class="card-text"></p>
+                                <p class="card-subtitle text-muted text-truncate">{{ value.description }}</p>
+                                <p class="card-text mx-auto text-center"><span class="badge badge-pill badge-danger">{{ dict.type }}</span></p>
+                                <a href="#" class="btn btn-primary">Compound information</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+{% endblock %}

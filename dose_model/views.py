@@ -3,7 +3,8 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .serializers import CompoundTypeSerializer, CompoundSerializer, DoseModelSerializer, PlasmaConcentrationSerializer
-from .models import CompoundType, Compound, Dose
+from .models import Dose
+from compounds.models import CompoundType, Compound
 from plot_dose.views import dose_chart_data
 import dateutil.parser
 from django.core.serializers.json import DjangoJSONEncoder

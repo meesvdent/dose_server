@@ -1,7 +1,8 @@
 from django.forms import ModelForm, MultipleChoiceField, Form, Select
 from bootstrap_datepicker_plus import DateTimePickerInput
 from django.forms.widgets import CheckboxSelectMultiple, DateTimeInput
-from dose_model.models import Compound, Dose, PlasmaConcentration
+from dose_model.models import Dose, PlasmaConcentration
+from compounds.models import Compound
 
 
 class CompoundSubsetForm(ModelForm):

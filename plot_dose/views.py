@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from .forms import CompoundSubsetForm, DoseForm, PlasmaConcentrationForm
-from dose_model.models import Dose, Compound, PlasmaConcentration
+from dose_model.models import Dose, PlasmaConcentration
+from compounds.models import Compound
 from django.contrib import messages
 import datetime
 from django.utils import timezone

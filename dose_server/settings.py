@@ -10,21 +10,33 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 import os
+import json
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+try:
+    config_file = open('/etc/config.json')
+except IOError:
+    pass
+else:
+    with config_file:
+        config = json.load(config_file)
+    SECRET_KEY = config['SECRET_KEY']
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '6p5r=aph+$)v)&=yfovjau7=$5ky!xx#fnknl%7sb8!-$ao5tg'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['104.248.94.13']
+ALLOWED_HOSTS = ['165.22.205.198']
 
 
 # Application definition
@@ -36,17 +48,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sessions',
-    'djecrety',
     'chartjs',
     'dose_model',
     'plot_dose',
-    'users.apps.UsersConfig',
     'crispy_forms',
     'rest_framework',
     'bootstrap_datepicker_plus',
     'bootstrap4',
-
+    'users.apps.UsersConfig',
+    'compounds.apps.CompoundsConfig',
 ]
 
 MIDDLEWARE = [
@@ -127,26 +137,21 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
+
 STATIC_URL = '/static/'
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
-
-
-#STATIC_ROOT = os.path.join(BASE_DIR, "static/assets/")
+MEDIA_URL = '/media/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 BOOTSTRAP4 = {
     'include_jquery': True,
 }
+
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
 LOGIN_REDIRECT_URL = 'get_dose'
-
 
 # Override settings.py with localsettings.py when on local
 try:
