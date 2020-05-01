@@ -1,10 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from .forms import CompoundSubsetForm, DoseForm, PlasmaConcentrationForm
-from dose_model.models import Dose, PlasmaConcentration
+from dose_model.models import Dose
 from compounds.models import Compound
 from django.contrib import messages
-import datetime
-from django.utils import timezone
 
 
 def get_compound_type(request):
@@ -64,6 +62,7 @@ def get_dose(request):
             if dose_form.is_valid():
                 dose = dose_form.cleaned_data['dose']
                 time = dose_form.cleaned_data['time']
+                duration = dose_form.cleaned_data['duration']
                 compound = dose_form.cleaned_data['compound']
                 mass = dose_form.cleaned_data['mass']
 
@@ -73,7 +72,7 @@ def get_dose(request):
                 else:
                     user = None
 
-                cur_model.create_cur_model(doses=dose, time=time, compound=compound, mass=mass, user=user)
+                cur_model.create_cur_model(doses=dose, time=time, compound=compound, mass=mass, user=user, duration=duration)
 
                 request.session['doses'].append(cur_model.id)
                 request.session.modified = True
@@ -87,7 +86,6 @@ def get_dose(request):
             conc_form = PlasmaConcentrationForm(doses, request.POST)
             if conc_form.is_valid():
                 dose_choice = conc_form.cleaned_data['dose']
-                print(dose_choice)
                 return dose_chart(request, dose_choice, conc_form)
             else:
                 messages.error(request, "Add a dose to plot")
@@ -112,7 +110,27 @@ def get_dose(request):
 
 def dose_chart(request, ids, conc_form):
 
-    doses = dose_chart_data(ids)
+    compounds_dose = {}
+    queryset = Dose.objects.filter(id__in=ids)
+
+    for dose in queryset:
+        if str(dose.compound) not in compounds_dose.keys():
+            compounds_dose[str(dose.compound)] = [dose.id]
+        else:
+            compounds_dose[str(dose.compound)].append(dose.id)
+
+    doses = {}
+    for key, value in compounds_dose.items():
+        print(value)
+        cur_compound = Compound.objects.filter(compound=key).select_subclasses().first()
+        print(type(cur_compound))
+        comp_of_interest = cur_compound.comp_of_interest
+        cur_compound_doses, cumulative = cur_compound.dose_chart_data(value, comp_of_interest=comp_of_interest)
+        doses.update(cur_compound_doses)
+        print(type(cur_compound))
+        print(doses)
+        cumulative_doses = cur_compound.calc_cumulative(cur_compound_doses, cumulative)
+        doses.update(cumulative_doses)
 
     # prep empty forms
     if 'doses' not in request.session.keys():
@@ -127,75 +145,6 @@ def dose_chart(request, ids, conc_form):
         'dose_form': dose_form,
         'plasma_conc': filtered_concentration_form
     })
-
-
-def dose_chart_data(ids):
-    doses = {}
-
-    for an_id in ids:
-        dose_query = Dose.objects.get(id=an_id)
-
-        conc_query = PlasmaConcentration.objects.filter(dose=an_id)
-
-        coords = list(conc_query.values('time', 'conc'))
-        for coord_dict in coords:
-            coord_dict['x'] = coord_dict.pop('time')
-            coord_dict['y'] = coord_dict.pop('conc')
-
-        doses[an_id] = {
-            'compound': str(dose_query.compound),
-            'color': str(dose_query.compound.color),
-            'line': [10, 10],
-            'coords': coords}
-
-    # Add up concentration from same compound at same tame (for same user)
-
-    cumulative = {}
-    for key, dose in doses.items():
-
-        if dose['compound'] not in cumulative.keys():
-            cumulative[dose['compound']] = {
-                'compound': dose['compound'],
-                'color': dose['color'],
-                'line': [],
-                'coords': [],
-                'first_date': timezone.now(),
-                'last_date': timezone.now()
-            }
-
-        i = 0
-        for dose_coord_dict in dose['coords']:
-            if dose_coord_dict['x'] < cumulative[dose['compound']]['first_date']:
-                cumulative[dose['compound']]['first_date'] = dose_coord_dict['x']
-            if dose_coord_dict['x'] > cumulative[dose['compound']]['last_date']:
-                cumulative[dose['compound']]['last_date'] = dose_coord_dict['x']
-            if dose_coord_dict['x'] not in [cumulative_coord_dict['x'] for cumulative_coord_dict in cumulative[dose['compound']]['coords']]:
-                cumulative[dose['compound']]['coords'].append(dose_coord_dict)
-                i = i+1
-            else:
-                i = [cumulative_coord_dict['x'] for cumulative_coord_dict in cumulative[dose['compound']]['coords']].index(dose_coord_dict['x'])
-                cumulative_x = dose_coord_dict['x']
-                cumulative_y = dose_coord_dict['y'] + cumulative[dose['compound']]['coords'][i]['y']
-                cumulative_coord = {'x': cumulative_x, 'y': cumulative_y}
-                cumulative[dose['compound']]['coords'][i] = cumulative_coord
-                i = i+1
-
-    # # add zero values to empty dates in range and make minimal range 0-1 month
-    # for key, dose in cumulative.items():
-    #     dose['coords'] = sorted(dose['coords'], key = lambda k: k["x"])
-    #     days = (dose['last_date'] - dose['first_date']).total_seconds()/(3600*24)
-    #     days_difference = int(31 - days)
-    #     print(days_difference)
-    #
-    #     if days_difference > 0:
-    #         print(range(days_difference*24*3600))
-    #         add_dates = dose['first_date'] - datetime.timedelta(seconds=days_difference*24*3600)
-    #         print(add_dates)
-    #         dose['coords'] = [{'x': add_dates, 'y': 0}] + dose['coords']
-    #         print('added')
-
-    doses.update(cumulative)
-    return doses
 
 
 def test_chartjs_scroll(request):

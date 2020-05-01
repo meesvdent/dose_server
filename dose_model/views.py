@@ -1,15 +1,12 @@
 import subprocess
 from django.http import HttpResponse, JsonResponse
-from rest_framework import viewsets, status
-from rest_framework.response import Response
+from rest_framework import viewsets
 from .serializers import CompoundTypeSerializer, CompoundSerializer, DoseModelSerializer, PlasmaConcentrationSerializer
 from .models import Dose
 from compounds.models import CompoundType, Compound
-from plot_dose.views import dose_chart_data
 import dateutil.parser
 from django.core.serializers.json import DjangoJSONEncoder
 import json
-
 
 
 def home(request):
@@ -17,9 +14,12 @@ def home(request):
 
 
 def update_model(request):
-    update_model_sh = './update_model.sh'
-    subprocess.Popen([update_model_sh], shell=True)
-    return HttpResponse("kinetics_models.py updated!")
+    update_model_sh = 'dose_model/update_model.sh'
+    try:
+        subprocess.Popen([update_model_sh], shell=True)
+        return HttpResponse("kinetics_models.py updated!")
+    except:
+        return HttpResponse("update not possible")
 
 
 def calc_conc(request):

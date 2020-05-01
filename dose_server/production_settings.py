@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'bootstrap_datepicker_plus',
     'bootstrap4',
-    'users.apps.UsersConfig',
     'compounds.apps.CompoundsConfig',
 ]
 
@@ -146,3 +145,4 @@ MESSAGE_TAGS = {
 }
 
 LOGIN_REDIRECT_URL = 'get_dose'
+

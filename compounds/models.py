@@ -2,10 +2,13 @@ from django.db import models
 from rdkit import Chem
 from rdkit.Chem import Draw
 from django.core.files import File
-
-
-# Create your models here.
+from dose_model.helpers import trans_thalf_ke, calc_dose_conc
+from dose_model.kinetics_models import SourceOneCompFirstOrder, PietersModel
+import numpy as np
+from model_utils.managers import InheritanceManager
 from django.utils import timezone
+from math import log2
+import dose_model.models as dose_model
 
 
 class CompoundType(models.Model):
@@ -22,21 +25,209 @@ class CompoundType(models.Model):
 
 
 class Compound(models.Model):
+
+    # all compounds properties
     compound = models.CharField(max_length=200)
-    mol_mass = models.FloatField()
-    t_half = models.FloatField()
-    k_abs = models.FloatField()
-    dv = models.FloatField()
     compound_type = models.ManyToManyField(CompoundType, related_name='compound')
+    mol_mass = models.FloatField()
+    dv = models.FloatField()
+    n_comps = 1
+    comp_of_interest = 1
+
+    clearance_types = [(str(i), ['Renal', 'Enzymatic'][i]) for i in range(2)]
+    clearance_type = models.CharField(max_length=1, choices=clearance_types)
+
+    # extra
     description = models.TextField()
     photo = models.ImageField(upload_to="compound_structures", null=True, blank=True)
     color = models.CharField(max_length=200)
     smiles = models.CharField(max_length=2000, null=True)
     upload_date = models.DateTimeField(blank=True, null=True)
 
-    def publish(self):
-        self.upload_date = timezone.now()
-        self.save()
+    objects = InheritanceManager()
+
+    def dose_chart_data(self, ids, comp_of_interest):
+        doses = {}
+        # make a dict with key = dose id, value = dict containing compound, color, line and coords
+        for an_id in ids:
+            dose_query = dose_model.Dose.objects.get(id=an_id)
+
+            conc_query = dose_model.PlasmaConcentration.objects.filter(dose=an_id, comp=comp_of_interest)
+
+            coords = list(conc_query.values('time', 'conc'))
+            for coord_dict in coords:
+                coord_dict['x'] = coord_dict.pop('time')
+                coord_dict['y'] = coord_dict.pop('conc')
+
+            doses[an_id] = {
+                'compound': str(dose_query.compound),
+                'color': str(dose_query.compound.color),
+                'line': [10, 10],
+                'coords': coords}
+
+        doses = {k: v for k, v in sorted(doses.items(), key=lambda item: item[1]['coords'][0]['x'])}
+
+        cumulative = {}
+        for key, dose in doses.items():
+
+            if dose['compound'] not in cumulative.keys():
+                cumulative[dose['compound']] = {
+                    'compound': dose['compound'],
+                    'color': dose['color'],
+                    'line': [],
+                    'coords': [],
+                    'first_date': None,
+                    'last_date': None
+                }
+
+        return doses, cumulative
+
+    def add_doses_first_order(self, doses, cumulative):
+        for key, dose in doses.items():
+            i = 0
+            for dose_coord_dict in dose['coords']:
+                if cumulative[dose['compound']]['first_date'] is None:
+                    cumulative[dose['compound']]['first_date'] = dose_coord_dict['x']
+                    cumulative[dose['compound']]['last_date'] = dose_coord_dict['x']
+                if dose_coord_dict['x'] < cumulative[dose['compound']]['first_date']:
+                    cumulative[dose['compound']]['first_date'] = dose_coord_dict['x']
+                if dose_coord_dict['x'] > cumulative[dose['compound']]['last_date']:
+                    cumulative[dose['compound']]['last_date'] = dose_coord_dict['x']
+                if dose_coord_dict['x'] not in [cumulative_coord_dict['x'] for cumulative_coord_dict in
+                                                cumulative[dose['compound']]['coords']]:
+                    cumulative[dose['compound']]['coords'].append(dose_coord_dict)
+                    i = i + 1
+                else:
+                    i = [cumulative_coord_dict['x'] for cumulative_coord_dict in
+                         cumulative[dose['compound']]['coords']].index(dose_coord_dict['x'])
+                    cumulative_x = dose_coord_dict['x']
+                    cumulative_y = dose_coord_dict['y'] + cumulative[dose['compound']]['coords'][i]['y']
+                    cumulative_coord = {'x': cumulative_x, 'y': cumulative_y}
+                    cumulative[dose['compound']]['coords'][i] = cumulative_coord
+                    i = i + 1
+
+        return cumulative
+
+    def add_doses_recalc(self, doses, cumulative_coords, X0, ncomps, comp_of_int, startzero=True):
+        keys = list(doses.keys())
+        if len(keys) == 0:
+            return cumulative_coords
+        compound = Compound.objects.filter(compound=doses[keys[0]]['compound']).select_subclasses().first()
+        cur_dose = dose_model.Dose.objects.get(id=keys[0])
+
+        if len(keys) == 1:  # last dose
+            if startzero:  # add last dose from memory
+                cumulative_coords = cumulative_coords + doses[keys[0]]['coords']
+                del doses[keys[0]]
+                X0 = [0 for i in range(self.n_comps)]
+                cumulative_coords = self.add_doses_recalc(doses, cumulative_coords, X0, ncomps=ncomps, comp_of_int=comp_of_int)
+                return cumulative_coords
+            else:  # calculate last dose with calculated X0 and add it
+                time_range = compound.calc_time_range_min(dose=cur_dose.dose, duration=cur_dose.duration, X0=X0)
+                new_dict = compound.calc_conc(
+                    dose=cur_dose.dose,
+                    mass=cur_dose.mass,
+                    duration=cur_dose.duration,
+                    X0=X0,
+                    time_range=time_range)
+                new_conc = new_dict['X'][:, comp_of_int]
+                new_times = new_dict['t']
+                new_coords = []
+                for i in range(len(new_conc)):
+                    new_coords.append({
+                        'x': cur_dose.time + timezone.timedelta(seconds=new_times[i]),
+                        'y': new_conc[i]
+                    })
+                cumulative_coords = cumulative_coords + new_coords
+
+                del doses[keys[0]]
+                cumulative_coords = self.add_doses_recalc(doses, cumulative_coords, X0, ncomps=ncomps, startzero=True, comp_of_int=comp_of_int)
+                return cumulative_coords
+
+        if startzero:
+            last_current = doses[keys[0]]['coords'][-1]['x']
+        else:
+            time_range = compound.calc_time_range_min(dose=cur_dose.dose, duration=cur_dose.duration, X0=X0)
+            last_current = cur_dose.time + timezone.timedelta(minutes=time_range)
+
+        first_next = doses[keys[1]]['coords'][0]['x']
+        first_current = doses[keys[0]]['coords'][0]['x']
+        dt = int((first_next - first_current).seconds/60)  # + 1
+
+        if first_next > last_current:  # there is no overlap with next
+            if startzero:  # just add the coords already in memory
+                cumulative_coords = cumulative_coords + doses[keys[0]]['coords']
+                del doses[keys[0]]
+                X0 = [0 for i in range(self.n_comps)]
+                cumulative_coords = self.add_doses_recalc(doses, cumulative_coords, X0, ncomps=ncomps, comp_of_int=comp_of_int)
+                return cumulative_coords
+            else:  # recalc the coords from new X0
+                time_range = compound.calc_time_range_min(dose=cur_dose.dose, duration=cur_dose.duration, X0=X0)
+                new_dict = compound.calc_conc(
+                    dose=cur_dose.dose,
+                    mass=cur_dose.mass,
+                    duration=cur_dose.duration,
+                    X0=X0,
+                    time_range=time_range)
+                new_conc = new_dict['X'][:, comp_of_int]
+                new_times = new_dict['t']
+                new_coords = []
+                for i in range(len(new_conc)):
+                    new_coords.append({
+                        'x': cur_dose.time + timezone.timedelta(seconds=new_times[i]),
+                        'y': new_conc[i]
+                    })
+                cumulative_coords = cumulative_coords + new_coords
+
+                del doses[keys[0]]
+                cumulative_coords = self.add_doses_recalc(doses, cumulative_coords, X0, ncomps=ncomps, startzero=True,
+                                                          comp_of_int=comp_of_int)
+                return cumulative_coords
+        else:  # there is overlap with the next dose
+            if startzero:  # add everything untill the next dose and resubmit with startzero is false and proper X0
+                cumulative_coords = cumulative_coords + doses[keys[0]]['coords'][0:dt]
+                X0 = []
+                for i in range(ncomps):
+                    X0_queryset = dose_model.PlasmaConcentration.objects.filter(dose=keys[0], comp=i, time=first_next)
+                    X0_values = X0_queryset.values_list('conc', flat=True)[0]
+                    X0.append(X0_values)
+                del doses[keys[0]]
+                cumulative_coords = self.add_doses_recalc(doses, cumulative_coords, X0, ncomps=ncomps, comp_of_int=comp_of_int, startzero=False)
+                return cumulative_coords
+            else:
+                # recalculate everything with proper X0 untill the next dose
+                # resubmit with startzero is false and proper X0
+                time_range = dt
+                new_dict = compound.calc_conc(
+                    dose=cur_dose.dose,
+                    mass=cur_dose.mass,
+                    duration=cur_dose.duration,
+                    X0=X0,
+                    time_range=time_range)
+                new_conc = new_dict['X'][:, comp_of_int]
+                new_times = new_dict['t']
+                new_coords = []
+                for i in range(len(new_conc)):
+                    new_coords.append({
+                        'x': cur_dose.time + timezone.timedelta(seconds=new_times[i]),
+                        'y': new_conc[i]
+                    })
+                cumulative_coords = cumulative_coords + new_coords
+
+                # make new X0:
+                X0 = []
+                for i in range(ncomps):
+                    X0.append(new_dict['X'][-1, i])
+                del doses[keys[0]]
+                cumulative_coords = self.add_doses_recalc(doses, cumulative_coords, X0, ncomps=ncomps, startzero=False,
+                                                          comp_of_int=comp_of_int)
+                return cumulative_coords
+
+
+
+
+
+
 
     def __str__(self):
         return self.compound
@@ -48,16 +239,88 @@ class Compound(models.Model):
             url = draw_compound_structure(smiles=self.smiles, name=self.compound, width=300, height=300)
 
             self.photo.save(self.compound+".png", File(open(url, 'rb')))
-            print("saved in model")
             self.save()
+
+
+class OneCompFirstOrderCompound(Compound):
+
+    k_abs_one_comp = models.FloatField(null=True, blank=True)
+    t_half_in_hours = models.FloatField(null=True, blank=True)
+
+    n_comps = 2
+    comp_of_interest = 1
+
+    def calc_conc(self, dose, mass, duration, X0=[0, 0]):
+        # model for t-start until 6 * halflife: 0.015625 left
+        halflife_m = round(self.t_half_in_hours * 60)  # rounded half life in minutes
+        t = np.linspace(0, 10 * halflife_m * 60, 10 * halflife_m + 1)
+
+        ke = trans_thalf_ke(self.t_half_in_hours * 3600)
+        dv = mass * self.dv
+
+        dose_conc = calc_dose_conc([dose], float(self.mol_mass), dv)
+        dose = [list(a) for a in zip(dose_conc, [0], [duration])]
+        model = SourceOneCompFirstOrder(X0=X0, doses=dose, k_s1=self.k_abs_one_comp, k_ex=ke)
+
+        X = model.integrate(t)
+
+        return {'t': t, 'X': X}
+
+    def calc_cumulative(self, doses, cumulative):
+        cumulative = self.add_doses_first_order(doses, cumulative)
+        return cumulative
+
+
+class PietersModelCompound(Compound):
+    # Enzymatic metabolisation parameters
+    v_max = models.FloatField(null=True, blank=True)
+    k_m = models.FloatField(null=True, blank=True)
+
+    # Pieters model uptake
+    k_12 = models.FloatField(null=True, blank=True)
+    k_23 = models.FloatField(null=True, blank=True)
+    a_av = models.FloatField(null=True, blank=True)
+
+    n_comps = 3
+    comp_of_interest = 2  # the third compartment
+
+    def calc_time_range_min(self, dose, duration, X0):
+        dur_min = round(log2(((dose + sum(X0)) * 1E100) + duration / 60))
+        return dur_min
+
+    def calc_conc(self, dose, mass, duration, X0=[0, 0, 0], time_range=None):
+        if time_range is None:
+            time_range = self.calc_time_range_min(dose, duration, X0)
+
+        dv = mass * self.dv
+        dose_conc = calc_dose_conc([dose], float(self.mol_mass), dv)
+        dose = [list(a) for a in zip(dose_conc, [0], [duration])]
+
+        model = PietersModel(X0=X0, doses=dose, k12=self.k_12, k23=self.k_23, vmax=self.v_max, km=self.k_m, a=self.a_av)
+
+        t = np.linspace(0, time_range * 60, time_range + 1)
+        X = model.integrate(t)
+
+        return {'t': t, 'X': X}
+
+    def calc_cumulative(self, doses, cumulative):
+        cumulative_coords = []
+        X0 = [0 for i in range(self.n_comps)]
+        cumulative_coords = self.add_doses_recalc(
+            doses,
+            cumulative_coords,
+            X0=X0,
+            ncomps=self.n_comps,
+            comp_of_int=self.comp_of_interest)
+        keys = list(cumulative.keys())
+        cumulative[keys[0]]['coords'] = cumulative_coords
+        return cumulative
 
 
 def draw_compound_structure(smiles, name, width, height):
     mol = Chem.MolFromSmiles(smiles)
 
-    #png = Draw.MolsToGridImage([mol])
     path = "media/compound_structures/" + name + ".png"
-    print(path + "  saved!")
     Draw.MolToFile(mol, path, size=(width, height))
     return path
 

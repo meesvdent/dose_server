@@ -1,6 +1,8 @@
 ## Dose
 Modelling plasma concentration for different compounds and visualizing for users.
 
+# Let's go
+
 ### Goals
 - Implement pharmocokinetic models into python classes
     - First order elimination
@@ -19,12 +21,14 @@ Modelling plasma concentration for different compounds and visualizing for users
 
 
 ### Work to be done
-- Python class implementing enzymatic metabolization
+- Python class implementing everything
+    - enzymatic metabolization
+    - first-pass effect
+    - different compartments
     - predict hangover by modeling Acetaldehyde concentration
 - Visualizations
-    - Scroll through time
-    - Visualize certain time range: 'today', 'past week'
-    - "now" line
+    - Scroll through time -> better
+    - "now" line -> first decide which plotting library to go with
         - https://stackoverflow.com/questions/30256695/chart-js-drawing-an-arbitrary-vertical-line
     - add "0" values for times not in sum compounds for every sum compounds in range of at least 1 month
 - Implement user model: connect to dose so only your own doses show up.

@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, HttpResponse
 from compounds.models import CompoundType, Compound
 
 
@@ -21,4 +21,13 @@ def compound_view(request):
         'compound_types': compound_types,
         'compounds': compounds
     })
+
+
+def compound(request):
+
+    compound = request.GET.get('compound')
+    compound_inst = Compound.objects.filter(compound=compound)
+    compound_dict = compound_inst.values()[0]
+    print(compound_dict)
+    return render(request, 'compound.html', compound_dict)
 

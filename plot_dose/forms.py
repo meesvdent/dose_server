@@ -17,7 +17,7 @@ class CompoundSubsetForm(ModelForm):
 class DoseForm(ModelForm):
     class Meta:
         model = Dose
-        fields = ['compound', 'dose', 'time', 'mass']
+        fields = ['compound', 'dose', 'time', 'duration', 'mass']
         widgets = {
             'time': DateTimePickerInput(),
         }
@@ -25,7 +25,8 @@ class DoseForm(ModelForm):
             'compound': 'Compound',
             'dose': 'Compound dose (grams)',
             'mass': 'Bodyweight (kilograms)',
-            'time': 'Moment of ingestion'
+            'time': 'Moment of ingestion',
+            'duration': 'Duration of ingestion'
         }
 
 

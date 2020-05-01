@@ -1,28 +1,38 @@
 {% extends 'plot_dose/base.html' %}
-{% include compounds %}
 
 {% block forms %}
 
     {% for dict in compound_types %}
-        <div>
-            <legend class="border-bottom mb-4">{{ dict.type }}</legend>
-            <div class="row content-section">
-                {% for key, value in dict.compounds.items %}
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card rounded-card">
-                            <img class="img-rounded" src="/media/{{ value.photo }}" alt="">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ value.compound }}</h5>
-                                <p class="card-text"></p>
-                                <p class="card-subtitle text-muted text-truncate">{{ value.description }}</p>
-                                <p class="card-text mx-auto text-center"><span class="badge badge-pill badge-danger">{{ dict.type }}</span></p>
-                                <a href="#" class="btn btn-primary">Compound information</a>
+
+        <div class="mt-4 mb-4">
+            <section class="jumbotron jumbotron-fluid text-center">
+                <div class="container">
+                    <h1 class="jumbotron-heading">{{ dict.type }}</h1>
+                    <p class="lead text-muted">{{ dict.description }}</p>
+                </div>
+            </section>
+            <div class="container">
+                <div class="album py5 bg-light">
+                    <div class="row">
+                    {% for key, value in dict.compounds.items %}
+                        <div class="col-md-4 mt-2">
+                            <div class="card md-4 box-shadow">
+                                <img class="card-img-top" src="/media/{{ value.photo }}" alt="" style="height: 300px; width: 100%; display: block">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ value.compound }}</h5>
+                                    <p class="card-text"></p>
+                                    <p class="card-subtitle text-muted text-truncate">{{ value.description }}</p>
+                                    <p class="card-text mx-auto text-center"><span class="badge badge-pill badge-danger">{{ dict.type }}</span></p>
+                                    <a href="{% url 'compound' %}?compound={{ value.compound }}" class="btn btn-primary">Compound information</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
+                </div>
             </div>
         </div>
+
     {% endfor %}
 
 {% endblock %}

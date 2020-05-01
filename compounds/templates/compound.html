@@ -1,0 +1,17 @@
+{% extends 'plot_dose/base.html' %}
+
+{% block forms %}
+
+    <section class="jumbotron jumbotron-fluid text-center">
+        <div class="container">
+            <h1 class="jumbotron-heading">{{ compound }}</h1>
+            <img src="/media/{{ photo }}" alt="">
+            <p class="lead text-muted">{{ dict.description }}</p>
+        </div>
+    </section>
+
+    <div class="content-section">
+    {{ description }}
+    </div>
+
+{% endblock %}
