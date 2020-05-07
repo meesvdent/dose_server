@@ -12,10 +12,10 @@ class Dose(models.Model):
     compound = models.ForeignKey(Compound, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
-    def create_cur_model(self, doses, time, compound, mass, user, duration=10):
+    def create_cur_model(self, doses, time, compound, mass, user, duration=60, calc_conc=True):
         self.dose = doses
         self.time = time
-        self.duration = duration
+        self.duration = duration * 60
         self.mass = mass
         self.user = user
         self.save()
@@ -24,7 +24,8 @@ class Dose(models.Model):
         self.compound = compound_inst
         self.save(update_fields=['compound'])
 
-        self.calc_conc_model()
+        if calc_conc:
+            self.calc_conc_model()
 
         return self
 

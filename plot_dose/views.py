@@ -110,27 +110,7 @@ def get_dose(request):
 
 def dose_chart(request, ids, conc_form):
 
-    compounds_dose = {}
-    queryset = Dose.objects.filter(id__in=ids)
-
-    for dose in queryset:
-        if str(dose.compound) not in compounds_dose.keys():
-            compounds_dose[str(dose.compound)] = [dose.id]
-        else:
-            compounds_dose[str(dose.compound)].append(dose.id)
-
-    doses = {}
-    for key, value in compounds_dose.items():
-        print(value)
-        cur_compound = Compound.objects.filter(compound=key).select_subclasses().first()
-        print(type(cur_compound))
-        comp_of_interest = cur_compound.comp_of_interest
-        cur_compound_doses, cumulative = cur_compound.dose_chart_data(value, comp_of_interest=comp_of_interest)
-        doses.update(cur_compound_doses)
-        print(type(cur_compound))
-        print(doses)
-        cumulative_doses = cur_compound.calc_cumulative(cur_compound_doses, cumulative)
-        doses.update(cumulative_doses)
+    doses = dose_chart_data(ids)
 
     # prep empty forms
     if 'doses' not in request.session.keys():
@@ -145,6 +125,33 @@ def dose_chart(request, ids, conc_form):
         'dose_form': dose_form,
         'plasma_conc': filtered_concentration_form
     })
+
+
+def dose_chart_data(ids):
+    compounds_dose = {}
+    queryset = Dose.objects.filter(id__in=ids)
+
+    for dose in queryset:
+        if str(dose.compound) not in compounds_dose.keys():
+            compounds_dose[str(dose.compound)] = [dose.id]
+        else:
+            compounds_dose[str(dose.compound)].append(dose.id)
+
+    doses = {}
+    for key, value in compounds_dose.items():
+        cur_compound = Compound.objects.filter(compound=key).select_subclasses().first()
+        comp_of_interest = cur_compound.comp_of_interest
+        cur_compound_doses, cumulative = cur_compound.dose_chart_data(value, comp_of_interest=comp_of_interest)
+        doses.update(cur_compound_doses)
+        print(value)
+        print(cur_compound_doses)
+        print(key)
+        new_list, unusable_doses = cur_compound.check_overlap(value, cur_compound_doses, key)
+
+        cumulative_doses = cur_compound.calc_cumulative(unusable_doses, cumulative)
+        doses.update(cumulative_doses)
+
+    return doses
 
 
 def test_chartjs_scroll(request):

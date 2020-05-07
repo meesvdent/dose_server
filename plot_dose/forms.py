@@ -26,7 +26,7 @@ class DoseForm(ModelForm):
             'dose': 'Compound dose (grams)',
             'mass': 'Bodyweight (kilograms)',
             'time': 'Moment of ingestion',
-            'duration': 'Duration of ingestion'
+            'duration': 'Duration of ingestion (minutes)'
         }
 
 

@@ -3,7 +3,7 @@ from scipy.integrate import odeint
 
 
 class KineticsModel(object):
-    
+
     def __init__(self, X0, doses):
         """
 
@@ -22,7 +22,10 @@ class KineticsModel(object):
     def pulse(self, t):
         tot = 0
         for mass, ing_time, ingestion_dur in self.doses:
-            tot += self.step(t-ing_time) * self.step((ing_time+ingestion_dur)-t) * mass/ingestion_dur
+            if ingestion_dur == 0:  # dose immediately in stomach
+                tot += self.step(t - ing_time) * self.step((ing_time + 1) - t) * mass
+            else:
+                tot += self.step(t - ing_time) * self.step((ing_time + ingestion_dur) - t) * mass / ingestion_dur
         return tot
 
     def dX_dt(self, X, t):
@@ -65,16 +68,16 @@ class PietersModel(KineticsModel):
         self.km = km
         self.a = a
 
-    def d_c1(self, X, t):
+    def d_c1(self, X, t):  # stomach
         d_c1 = self.pulse(t) - (self.k12 / (1 + self.a * X[0] * X[0])) * X[0]
         return d_c1
 
-    def d_c2(self, X):
-        d_c2 = (self.k12/(1 + self.a * X[0] * X[0])) * X[0] - X[1] * self.k23
+    def d_c2(self, X):  # small intestine
+        d_c2 = (self.k12 / (1 + self.a * X[0] * X[0])) * X[0] - X[1] * self.k23
         return d_c2
 
-    def d_c3(self, X):
-        d_c3 = X[1] * self.k23 - (self.vmax/(self.km + X[2])) * X[2]
+    def d_c3(self, X):  # plasma
+        d_c3 = X[1] * self.k23 - (self.vmax / (self.km + X[2])) * X[2]
         return d_c3
 
     def dX_dt(self, X, t):

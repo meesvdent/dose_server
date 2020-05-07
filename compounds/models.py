@@ -9,6 +9,7 @@ from model_utils.managers import InheritanceManager
 from django.utils import timezone
 from math import log2
 import dose_model.models as dose_model
+from django.utils import timezone
 
 
 class CompoundType(models.Model):
@@ -112,6 +113,7 @@ class Compound(models.Model):
         keys = list(doses.keys())
         if len(keys) == 0:
             return cumulative_coords
+
         compound = Compound.objects.filter(compound=doses[keys[0]]['compound']).select_subclasses().first()
         cur_dose = dose_model.Dose.objects.get(id=keys[0])
 
@@ -144,6 +146,7 @@ class Compound(models.Model):
                 cumulative_coords = self.add_doses_recalc(doses, cumulative_coords, X0, ncomps=ncomps, startzero=True, comp_of_int=comp_of_int)
                 return cumulative_coords
 
+        next_dose = dose_model.Dose.objects.get(id=keys[1])
         if startzero:
             last_current = doses[keys[0]]['coords'][-1]['x']
         else:
@@ -152,7 +155,7 @@ class Compound(models.Model):
 
         first_next = doses[keys[1]]['coords'][0]['x']
         first_current = doses[keys[0]]['coords'][0]['x']
-        dt = int((first_next - first_current).seconds/60)  # + 1
+        dt = int((first_next - first_current).seconds/60)
 
         if first_next > last_current:  # there is no overlap with next
             if startzero:  # just add the coords already in memory
@@ -197,13 +200,12 @@ class Compound(models.Model):
             else:
                 # recalculate everything with proper X0 untill the next dose
                 # resubmit with startzero is false and proper X0
-                time_range = dt
                 new_dict = compound.calc_conc(
                     dose=cur_dose.dose,
                     mass=cur_dose.mass,
                     duration=cur_dose.duration,
                     X0=X0,
-                    time_range=time_range)
+                    time_range=dt)
                 new_conc = new_dict['X'][:, comp_of_int]
                 new_times = new_dict['t']
                 new_coords = []
@@ -223,11 +225,87 @@ class Compound(models.Model):
                                                           comp_of_int=comp_of_int)
                 return cumulative_coords
 
+    def calc_overlap_dose(self, dose_list, doses, compound):
+        """
+        When the ingestion of two doses overlap, a virtual dose has to be calculated where the first part consists
+        of the first and second dose added together, folowed by the part of the second dose which is given on its own.
+        :param doses: array of ints
+        :return:
+        """
+        if(len(doses)) == 1:
+            return dose_list, doses
 
+        cur_compound = Compound.objects.filter(compound=compound).select_subclasses().first()
 
+        i = 0
+        keys = list(doses.keys())
+        while i < (len(keys) - 1):
+            print('keys: ', keys)
 
+            cur_dose = dose_model.Dose.objects.get(id=keys[i])
+            next_dose = dose_model.Dose.objects.get(id=keys[i+1])
 
+            first_next = doses[keys[i+1]]['coords'][0]['x']
+            first_current = doses[keys[i]]['coords'][0]['x']
+            dt = int((first_next - first_current).seconds/60)
 
+            print('dt: ', dt)
+
+            if dt < cur_dose.duration/60:
+                first_dose_per_minute = cur_dose.dose / (cur_dose.duration/60)
+                second_dose_per_minute = next_dose.dose / (next_dose.duration/60)
+
+                if cur_dose.duration/60 < dt + next_dose.duration/60:
+                    overlap = cur_dose.duration / 60 - dt
+                    first_dose_overlap = first_dose_per_minute * overlap
+                    first_dose = first_dose_per_minute * (cur_dose.duration / 60 - overlap)
+                    second_dose_overlap = second_dose_per_minute * overlap
+                    second_dose = second_dose_per_minute * (next_dose.duration/60 - overlap)
+                    second_dose_duration = next_dose.duration/60 - overlap
+                elif cur_dose.duration/60 >= dt + next_dose.duration/60:
+                    overlap = next_dose.duration / 60
+                    first_dose_overlap = first_dose_per_minute * overlap
+                    first_dose = first_dose_per_minute * dt
+                    second_dose_overlap = second_dose_per_minute * overlap
+                    second_dose = first_dose_per_minute * (cur_dose.duration/60 - overlap - dt)
+                    second_dose_duration = cur_dose.duration/60 - overlap - dt
+
+                overlap_dose = first_dose_overlap + second_dose_overlap
+                doses_amount = [first_dose, overlap_dose, second_dose]
+                times = [cur_dose.time, next_dose.time, cur_dose.time + timezone.timedelta(minutes=dt) + timezone.timedelta(minutes=overlap)]
+                durations = [dt*60, overlap*60, second_dose_duration*60]
+
+                print('new doses: ', doses_amount, times, durations)
+
+                overlap_doses = []
+                add_count = 0
+                for j in range(3):
+                    if doses_amount[j] != 0 and durations[j] != 0:
+                        cur_model = dose_model.Dose()
+                        cur_model.create_cur_model(
+                            doses=doses_amount[j],
+                            time=times[j],
+                            compound=cur_dose.compound,
+                            mass=cur_dose.mass,
+                            user=None,
+                            duration=durations[j]
+                        )
+                        overlap_doses.append(cur_model.id)
+                        add_count += 1
+
+                dose_list[i:i+2] = overlap_doses
+                print('dose_list: ', dose_list)
+                doses, cumulative = cur_compound.dose_chart_data(dose_list, comp_of_interest=cur_compound.comp_of_interest)
+                keys = list(doses.keys())
+                dose_list = keys
+                print(keys)
+                print('i', i)
+                print('len(keys)-1', len(keys) -1)
+
+            else:
+                i += 1
+
+        return dose_list, doses
 
     def __str__(self):
         return self.compound
@@ -269,6 +347,9 @@ class OneCompFirstOrderCompound(Compound):
     def calc_cumulative(self, doses, cumulative):
         cumulative = self.add_doses_first_order(doses, cumulative)
         return cumulative
+
+    def check_overlap(self, doses, dose_dicts, compound):
+        return doses, dose_dicts
 
 
 class PietersModelCompound(Compound):
@@ -315,6 +396,9 @@ class PietersModelCompound(Compound):
         keys = list(cumulative.keys())
         cumulative[keys[0]]['coords'] = cumulative_coords
         return cumulative
+
+    def check_overlap(self, doses, dose_dicts, compound):
+        return self.calc_overlap_dose(doses, dose_dicts, compound)
 
 
 def draw_compound_structure(smiles, name, width, height):
