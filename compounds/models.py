@@ -10,6 +10,7 @@ from django.utils import timezone
 from math import log2
 import dose_model.models as dose_model
 from django.utils import timezone
+import copy
 
 
 class CompoundType(models.Model):
@@ -34,6 +35,8 @@ class Compound(models.Model):
     dv = models.FloatField()
     n_comps = 1
     comp_of_interest = 1
+    standard_dose = models.FloatField()
+    standard_dose_max = models.FloatField(blank=True, null=True)
 
     clearance_types = [(str(i), ['Renal', 'Enzymatic'][i]) for i in range(2)]
     clearance_type = models.CharField(max_length=1, choices=clearance_types)
@@ -83,7 +86,33 @@ class Compound(models.Model):
 
         return doses, cumulative
 
+    def convert_units(self, doses, output='standard_dose_unit'):
+        if output == 'mol/L':
+            return doses
+        else:
+            new_doses = copy.deepcopy(doses)
+            for key, value in doses.items():
+                print(key)
+                # for key, value in doses.items():
+                #     print(key)
+                #     y_1 = list([coord['y'] for coord in doses[key]['coords']])
+                #     print(max(y_1))
+
+                compound = Compound.objects.filter(compound=value['compound']).select_subclasses().first()
+                if output == 'standard_dose_unit':
+
+                    for i in range(len(value['coords'])):
+                        new_doses[key]['coords'][i]['y'] = float(value['coords'][i]['y']) / compound.standard_dose_max
+        return new_doses
+
     def add_doses_first_order(self, doses, cumulative):
+        """
+        Adds each dose up to the cumulative dose.
+
+        :param doses: dict
+        :param cumulative: dict
+        :return: dict
+        """
         for key, dose in doses.items():
             i = 0
             for dose_coord_dict in dose['coords']:
@@ -192,9 +221,11 @@ class Compound(models.Model):
                 X0 = []
                 for i in range(ncomps):
                     X0_queryset = dose_model.PlasmaConcentration.objects.filter(dose=keys[0], comp=i, time=first_next)
+                    print(first_next)
                     X0_values = X0_queryset.values_list('conc', flat=True)[0]
                     X0.append(X0_values)
                 del doses[keys[0]]
+                print(X0)
                 cumulative_coords = self.add_doses_recalc(doses, cumulative_coords, X0, ncomps=ncomps, comp_of_int=comp_of_int, startzero=False)
                 return cumulative_coords
             else:
@@ -252,35 +283,47 @@ class Compound(models.Model):
             print('dt: ', dt)
 
             if dt < cur_dose.duration/60:
+                if cur_dose.duration == 0:
+                    cur_dose.duration = 1
                 first_dose_per_minute = cur_dose.dose / (cur_dose.duration/60)
+                if next_dose.duration == 0:
+                    cur_dose.duration = 1
                 second_dose_per_minute = next_dose.dose / (next_dose.duration/60)
 
                 if cur_dose.duration/60 < dt + next_dose.duration/60:
                     overlap = cur_dose.duration / 60 - dt
                     first_dose_overlap = first_dose_per_minute * overlap
+                    if cur_dose.duration == 0:
+                        first_dose_overlap = cur_dose.dose
                     first_dose = first_dose_per_minute * (cur_dose.duration / 60 - overlap)
                     second_dose_overlap = second_dose_per_minute * overlap
+                    if next_dose.duration == 0:
+                        second_dose_overlap = next_dose.dose
                     second_dose = second_dose_per_minute * (next_dose.duration/60 - overlap)
                     second_dose_duration = next_dose.duration/60 - overlap
                 elif cur_dose.duration/60 >= dt + next_dose.duration/60:
                     overlap = next_dose.duration / 60
                     first_dose_overlap = first_dose_per_minute * overlap
+                    if cur_dose.duration == 0:
+                        first_dose_overlap = cur_dose.dose
                     first_dose = first_dose_per_minute * dt
                     second_dose_overlap = second_dose_per_minute * overlap
+                    if next_dose.duration == 0:
+                        second_dose_overlap = next_dose.dose
                     second_dose = first_dose_per_minute * (cur_dose.duration/60 - overlap - dt)
                     second_dose_duration = cur_dose.duration/60 - overlap - dt
 
                 overlap_dose = first_dose_overlap + second_dose_overlap
                 doses_amount = [first_dose, overlap_dose, second_dose]
                 times = [cur_dose.time, next_dose.time, cur_dose.time + timezone.timedelta(minutes=dt) + timezone.timedelta(minutes=overlap)]
-                durations = [dt*60, overlap*60, second_dose_duration*60]
+                durations = [dt, overlap, second_dose_duration]
 
                 print('new doses: ', doses_amount, times, durations)
 
                 overlap_doses = []
                 add_count = 0
                 for j in range(3):
-                    if doses_amount[j] != 0 and durations[j] != 0:
+                    if doses_amount[j] != 0:
                         cur_model = dose_model.Dose()
                         cur_model.create_cur_model(
                             doses=doses_amount[j],
@@ -291,6 +334,8 @@ class Compound(models.Model):
                             duration=durations[j]
                         )
                         overlap_doses.append(cur_model.id)
+                        print(doses_amount[j])
+                        print(durations[j])
                         add_count += 1
 
                 dose_list[i:i+2] = overlap_doses
@@ -317,6 +362,14 @@ class Compound(models.Model):
             url = draw_compound_structure(smiles=self.smiles, name=self.compound, width=300, height=300)
 
             self.photo.save(self.compound+".png", File(open(url, 'rb')))
+
+        if not self.standard_dose_max:
+            cur_compound = Compound.objects.filter(compound=self.compound).select_subclasses()
+            cur_compound = cur_compound.first()
+
+            result = cur_compound.calc_conc(self.standard_dose, 75, 0)
+            X = result['X']
+            self.standard_dose_max = max(X[:, self.comp_of_interest])
             self.save()
 
 

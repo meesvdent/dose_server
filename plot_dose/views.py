@@ -81,7 +81,10 @@ def get_dose(request):
                 conc_form = PlasmaConcentrationForm(doses)
 
                 return render(request, 'plot_dose/dose_form.html', {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': conc_form})
-
+            else:
+                messages.error(request, "Invalid form")
+                return render(request, 'plot_dose/dose_form.html',
+                              {'compound_type': compound_type, 'dose_form': dose_form, 'plasma_conc': conc_form})
         elif 'btnform3' in request.POST:
             conc_form = PlasmaConcentrationForm(doses, request.POST)
             if conc_form.is_valid():
@@ -127,7 +130,7 @@ def dose_chart(request, ids, conc_form):
     })
 
 
-def dose_chart_data(ids):
+def dose_chart_data(ids, output='standard_dose_unit'):
     compounds_dose = {}
     queryset = Dose.objects.filter(id__in=ids)
 
@@ -143,13 +146,12 @@ def dose_chart_data(ids):
         comp_of_interest = cur_compound.comp_of_interest
         cur_compound_doses, cumulative = cur_compound.dose_chart_data(value, comp_of_interest=comp_of_interest)
         doses.update(cur_compound_doses)
-        print(value)
-        print(cur_compound_doses)
-        print(key)
         new_list, unusable_doses = cur_compound.check_overlap(value, cur_compound_doses, key)
-
         cumulative_doses = cur_compound.calc_cumulative(unusable_doses, cumulative)
         doses.update(cumulative_doses)
+
+    if output == 'standard_dose_unit':
+        doses = cur_compound.convert_units(doses, output)
 
     return doses
 

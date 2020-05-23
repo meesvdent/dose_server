@@ -1,14 +1,15 @@
 from django.db import models
 from django.utils import timezone
 from compounds.models import Compound
+from django.core.validators import MinValueValidator
 from django.contrib.auth.models import User
 
 
 class Dose(models.Model):
-    dose = models.FloatField()
+    dose = models.FloatField(validators=[MinValueValidator(0)])
     time = models.DateTimeField()
-    duration = models.FloatField()
-    mass = models.FloatField()
+    duration = models.FloatField(validators=[MinValueValidator(0)])
+    mass = models.FloatField(validators=[MinValueValidator(0.1)])
     compound = models.ForeignKey(Compound, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
