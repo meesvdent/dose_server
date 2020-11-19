@@ -5,7 +5,7 @@
 
     <div class="row">
 
-        <div class="content-section col-md-8">
+        <div class="content-section col-md-12">
             <div class="chartWrapper">
                 <div class="chartAreaWrapper">
                     <div class="chartAreaWrapper2">
@@ -50,6 +50,7 @@
                },
                options: {
                    responsive: true,
+                   maintainAspectRatio: false,
                    title: {
                        display: true,
                         text: 'Compound concentration'
@@ -84,7 +85,6 @@
                            },
                        }]
                    },
-                   maintainAspectRatio: false,
                    animation: {
                        onComplete: function () {
                            if (!rectangleSet) {
@@ -199,7 +199,21 @@
 
         </div>
 
-        <div class="content-section col-md-4">
+    </div>
+
+    <div class="row">
+
+        <div class="content-section col-md-12">
+
+            {% include 'plot_dose/new_form.html' %}
+
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="content-section col-md-3 offset-ml-1">
             <form action="/plot/dose_form/" method="post">
                 {% csrf_token %}
                 {{ plasma_conc|crispy }}
@@ -210,8 +224,8 @@
                 <input type="submit" class="btn btn-secondary btn-lg btn-block" value="Add a Dose" name="add_dose">
             </form>
         </div>
-
     </div>
+
 
 
 {% endblock forms %}

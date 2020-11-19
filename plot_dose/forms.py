@@ -10,7 +10,7 @@ class CompoundSubsetForm(ModelForm):
         model = Compound
         fields = ['compound_type']
         labels = {
-            'compound_type': 'Desired effect'
+            'compound_type': 'Compound type'
         }
 
 
@@ -23,10 +23,10 @@ class DoseForm(ModelForm):
         }
         labels = {
             'compound': 'Compound',
-            'dose': 'Compound dose (grams)',
-            'mass': 'Bodyweight (kilograms)',
-            'time': 'Moment of ingestion',
-            'duration': 'Duration of ingestion (minutes)'
+            'dose': 'Dose (grams)',
+            'mass': 'Bodyweight',
+            'time': 'Date and time',
+            'duration': 'Duration (minutes)'
         }
 
 

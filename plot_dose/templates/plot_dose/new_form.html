@@ -1,0 +1,41 @@
+{% load crispy_forms_tags %}
+
+
+<form action="/plot/dose_form/" method="post">
+    <div class="form-row">
+        {% csrf_token %}
+        <div class="form-group col-md-2">
+            {{ dose_form.compound|as_crispy_field }}
+        </div>
+        <div class="form-group col-md-2">
+            {{ dose_form.dose|as_crispy_field }}
+        </div>
+        <div class="form-group col-md-3">
+            {{ dose_form.time|as_crispy_field }}
+        </div>
+        <div class="form-group col-md-3">
+            {{ dose_form.duration|as_crispy_field }}
+        </div>
+        <div class="form-group col-md-2">
+            {{ dose_form.mass|as_crispy_field }}
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-12">
+            <button type="submit" name="btnform2", class="btn btn-secondary btn-lg btn-block">Add Dose</button>
+        </div>
+    </div>
+</form>
+
+
+<div class="form-row">
+    <form action="/plot/dose_form/" method="post">
+        {% csrf_token %}
+        <div class="form-group col-md-12">
+            {{ compound_type.compound_type|as_crispy_field }}
+        </div>
+        <div class="form-group col-md-12">
+            <button type="submit" name="btnform1", class="btn btn-secondary btn-lg btn-block">Filter compounds</button>
+        </div>
+    </form>
+</div>
