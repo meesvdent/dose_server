@@ -21,6 +21,9 @@ Modelling plasma concentration for different compounds and visualizing for users
 
 
 ### Work to be done
+- Therapeutic margin calculation
+    - Add side-effect at certain time
+    - Add therapeutic effect at certain time
 - Python class implementing everything
     - enzymatic metabolization
     - first-pass effect
