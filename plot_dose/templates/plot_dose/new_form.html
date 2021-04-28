@@ -27,15 +27,3 @@
     </div>
 </form>
 
-
-<div class="form-row">
-    <form action="/plot/dose_form/" method="post">
-        {% csrf_token %}
-        <div class="form-group col-md-12">
-            {{ compound_type.compound_type|as_crispy_field }}
-        </div>
-        <div class="form-group col-md-12">
-            <button type="submit" name="btnform1", class="btn btn-secondary btn-lg btn-block">Filter compounds</button>
-        </div>
-    </form>
-</div>

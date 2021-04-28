@@ -15,7 +15,6 @@ def generate_timeline(days, dosing):
 def mol_to_conc(mol_amount, dis_vol):
     '''Takes iterable of molair amounts and return iterable of
     conc coresponding to given distribution volume.
-
     :param mol_amount: float list
     :param dis_vol: float
     :return: dose_conc: float list
@@ -52,4 +51,3 @@ def trans_secs_to_date(start, seconds_array):
     for second in seconds:
         date.append(datetime.fromtimestamp(second).strftime("%A, %B %d, %Y %I:%M:%S"))
     return date
-

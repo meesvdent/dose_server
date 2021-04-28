@@ -8,6 +8,7 @@ from rest_framework import routers
 from dose_model import views as dose_model_views
 from users import views as user_views
 from compounds import views as compound_views
+from plot_dose import views as plot_dose_views
 
 
 router = routers.DefaultRouter()
@@ -17,7 +18,6 @@ router.register(r'concentrationmodel', dose_model_views.ConcentrationModelView, 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('dose_model.urls')),
     path('plot/', include('plot_dose.urls')),
     path('api/plasmaconcentrationmodel/', dose_model_views.get_plasma_conc, name='get_plasma_conc'),
     path('api/', include(router.urls)),
@@ -25,7 +25,9 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='users/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='users/logout.html'), name='logout'),
     path('compounds/', compound_views.compound_view, name='compound_view'),
-    path('compound/', compound_views.compound, name='compound')
+    path('compound/', compound_views.compound, name='compound'),
+
+    path('', plot_dose_views.index, name='index')
 ]
 
 urlpatterns += staticfiles_urlpatterns()
