@@ -30,10 +30,13 @@ ul {
 
 .content-section {
   background: #ffffff;
-  padding: 10px 20px;
   border: 1px solid #dddddd;
-  border-radius: 3px;
-  margin-bottom: 20px;
+  background-clip:padding-box;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  padding: 5px 5px 5px 5px;
 }
 
 .article-title {
@@ -103,7 +106,7 @@ a.article-title:hover {
 .chartAreaWrapper2 {
   width: 200%;
   position: relative;
-  height: 600px;
+  height: 300px;
 }
 
 .btn-group.special {

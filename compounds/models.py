@@ -112,6 +112,12 @@ class Compound(models.Model):
         :param doses: dict
         :param cumulative: dict
         :return: dict
+
+        TODO: optimize with numpy, this is horribly slow
+        check range function (looks at first and last time of eacht dose
+        create linspace for each minute in range and zeros
+
+        add each dose to that array, match by date
         """
         for key, dose in doses.items():
             i = 0
@@ -259,7 +265,7 @@ class Compound(models.Model):
     def calc_overlap_dose(self, dose_list, doses, compound):
         """
         When the ingestion of two doses overlap, a virtual dose has to be calculated where the first part consists
-        of the first and second dose added together, folowed by the part of the second dose which is given on its own.
+        of the first and second dose added together, followed by the part of the second dose which is given on its own.
         :param doses: array of ints
         :return:
         """
@@ -287,7 +293,8 @@ class Compound(models.Model):
                     cur_dose.duration = 1
                 first_dose_per_minute = cur_dose.dose / (cur_dose.duration/60)
                 if next_dose.duration == 0:
-                    cur_dose.duration = 1
+                    next_dose.duration = 1
+
                 second_dose_per_minute = next_dose.dose / (next_dose.duration/60)
 
                 if cur_dose.duration/60 < dt + next_dose.duration/60:
@@ -315,7 +322,7 @@ class Compound(models.Model):
 
                 overlap_dose = first_dose_overlap + second_dose_overlap
                 doses_amount = [first_dose, overlap_dose, second_dose]
-                times = [cur_dose.time, next_dose.time, cur_dose.time + timezone.timedelta(minutes=dt) + timezone.timedelta(minutes=overlap)]
+                times = [cur_dose.time, next_dose.time, cur_dose.time + timezone.timedelta(minutes=(dt+1)) + timezone.timedelta(minutes=overlap)]
                 durations = [dt, overlap, second_dose_duration]
 
                 print('new doses: ', doses_amount, times, durations)

@@ -13,6 +13,7 @@ Modelling plasma concentration for different compounds and visualizing for users
 
 
 ### Problems
+- Overlapping doses and ad fundum not functioning
 - How to stack multiple enzymatic compounds and visualize in fast way. 
     - Doses for first order kinetics compounds can be stacked up to form total concentration over time. 
     - Enzymatic metabolisation speed depends on substrate concentration 
@@ -21,6 +22,9 @@ Modelling plasma concentration for different compounds and visualizing for users
 
 
 ### Work to be done
+- Therapeutic margin calculation
+    - Add side-effect at certain time
+    - Add therapeutic effect at certain time
 - Python class implementing everything
     - enzymatic metabolization
     - first-pass effect

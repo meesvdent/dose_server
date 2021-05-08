@@ -1,0 +1,88 @@
+
+
+
+<script>
+
+    var ctx = document.getElementById("myChart").getContext("2d");
+
+    const chart = {
+       type: 'scatter',
+       data: {
+           datasets: [
+               {% for key, value in data.items %}
+               {
+                   label: "{{ value.compound }}",
+                   data: [
+                       {% for item in value.coords %}
+                           {
+                               'x': new Date("{{ item.x.isoformat }}"),
+                               'y': {{ item.y }}
+                           },
+                       {% endfor %}
+                   ],
+                   fill: false,
+                   showLine: true,
+                   borderColor: "{{ value.color }}",
+                   backgroundColor: "{{ value.color }}",
+                   borderDash: {{ value.line }},
+                   borderWidth: 3,
+                   pointRadius: 0,
+               },
+               {% endfor %}
+           ],
+       },
+
+       options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           scales: {
+               xAxes: [
+                   {
+                       type: 'time',
+                       display: true,
+                       time: {
+                           unit: 'hour'
+                       },
+                       tooltipFormat: 'hh',
+                       gridLines: {
+                           drawOnChartArea: false
+                       },
+                   },
+
+                   {
+                       type: 'time',
+                       display: true,
+                       time: {
+                           unit: 'day'
+                       },
+                       tooltipFormat: 'DD MMM YYYY',
+                       displayFormat: 'DD MM YYYY',
+                       gridLines: {
+                           drawBorders: false
+                       }
+
+                   }
+
+                   ],
+
+
+               yAxes: [{
+                   display: true,
+                   scaleLabel: {
+                       display: true,
+                       labelString: 'Standard dose Cmax'
+                   },
+                   gridLines: {
+                       drawOnChartArea: false
+                   },
+               }]
+           },
+           legend: {
+               display: false,
+           }
+       }
+    };
+
+    var myLiveChart = new Chart(ctx, chart);
+
+</script>

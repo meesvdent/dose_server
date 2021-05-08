@@ -1,0 +1,59 @@
+<script>
+    $("#myButtons :input").change(function() {
+       var firstDate = null;
+       var lastDate = null;
+       {% for key, value in data.items %}
+           {% with first=value.coords|first %}
+               {% with last=value.coords|last %}
+
+                   var firstRowDate = new Date("{{ first.x.isoformat }}");
+                   var lastRowDate = new Date("{{ last.x.isoformat }}")
+
+                   if(firstDate == null){
+                       firstDate = firstRowDate
+                   } else if(firstRowDate < firstDate){
+                       firstDate = firstRowDate
+                   }
+
+                   if(lastDate == null){
+                       lastDate = lastRowDate
+                   } else if(lastRowDate > lastDate){
+                       lastDate = lastRowDate
+                   }
+
+                   console.log(firstDate);
+                   console.log(lastDate);
+
+               {% endwith %}
+           {% endwith %}
+       {% endfor %}
+
+       const timeDiff = (lastDate.getTime() - firstDate.getTime())/(1000*3600*24);
+       console.log(timeDiff);
+
+       let newwidth = null;
+
+       if(this['id'] == '12_hours'){
+           newwidth = ((timeDiff*2))*100;
+       }
+       if(this['id'] == '24_hours'){
+           newwidth = ((timeDiff))*100;
+       }
+       if(this['id'] == '7_days'){
+           newwidth = ((timeDiff/7))*100;
+       }
+       if(this['id'] == '1_month'){
+           newwidth = ((timeDiff/30))*100;
+       }
+
+       newwidth = newwidth.toString()
+       newwidth = newwidth.concat("%")
+
+       console.log(newwidth)
+
+       $('.chartAreaWrapper2').width(newwidth);
+
+
+    });
+
+</script>
