@@ -12,13 +12,15 @@ class Dose(models.Model):
     mass = models.FloatField(validators=[MinValueValidator(0.1)])
     compound = models.ForeignKey(Compound, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    cumulative = models.CharField()
 
-    def create_cur_model(self, doses, time, compound, mass, user, duration=60, calc_conc=True):
+    def create_cur_model(self, doses, time, compound, mass, user, duration=60, cumulative=False, calc_conc=True):
         self.dose = doses
         self.time = time
         self.duration = duration * 60
         self.mass = mass
         self.user = user
+        self.cumulative = cumulative
         self.save()
 
         compound_inst = Compound.objects.get(compound=compound)
@@ -30,14 +32,16 @@ class Dose(models.Model):
 
         return self
 
-    def calc_conc_model(self):
-        time = self.time
-        dose = self.dose
+    def calc_conc_model(self, result=None):
 
-        cur_compound = Compound.objects.filter(compound=self.compound).select_subclasses()
-        cur_compound = cur_compound.first()
+        if result is None:
+            time = self.time
+            dose = self.dose
+            cur_compound = Compound.objects.filter(compound=self.compound).select_subclasses()
+            cur_compound = cur_compound.first()
 
-        result = cur_compound.calc_conc(dose, self.mass, self.duration)
+            result = cur_compound.calc_conc(dose, self.mass, self.duration)
+
         t = result['t']
         X = result['X']
 

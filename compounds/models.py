@@ -37,7 +37,6 @@ class Compound(models.Model):
     comp_of_interest = 1
     standard_dose = models.FloatField()
     standard_dose_max = models.FloatField(blank=True, null=True)
-
     clearance_types = [(str(i), ['Renal', 'Enzymatic'][i]) for i in range(2)]
     clearance_type = models.CharField(max_length=1, choices=clearance_types)
 
@@ -49,42 +48,6 @@ class Compound(models.Model):
     upload_date = models.DateTimeField(blank=True, null=True)
 
     objects = InheritanceManager()
-
-    def dose_chart_data(self, ids, comp_of_interest):
-        doses = {}
-        # make a dict with key = dose id, value = dict containing compound, color, line and coords
-        for an_id in ids:
-            dose_query = dose_model.Dose.objects.get(id=an_id)
-
-            conc_query = dose_model.PlasmaConcentration.objects.filter(dose=an_id, comp=comp_of_interest)
-
-            coords = list(conc_query.values('time', 'conc'))
-            for coord_dict in coords:
-                coord_dict['x'] = coord_dict.pop('time')
-                coord_dict['y'] = coord_dict.pop('conc')
-
-            doses[an_id] = {
-                'compound': str(dose_query.compound),
-                'color': str(dose_query.compound.color),
-                'line': [10, 10],
-                'coords': coords}
-
-        doses = {k: v for k, v in sorted(doses.items(), key=lambda item: item[1]['coords'][0]['x'])}
-
-        cumulative = {}
-        for key, dose in doses.items():
-
-            if dose['compound'] not in cumulative.keys():
-                cumulative[dose['compound']] = {
-                    'compound': dose['compound'],
-                    'color': dose['color'],
-                    'line': [],
-                    'coords': [],
-                    'first_date': None,
-                    'last_date': None
-                }
-
-        return doses, cumulative
 
     def convert_units(self, doses, output='standard_dose_unit'):
         if output == 'mol/L':

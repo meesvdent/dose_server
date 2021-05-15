@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .forms import CompoundSubsetForm, DoseForm, PlasmaConcentrationForm
-from dose_model.models import Dose
+from dose_model.models import Dose, PlasmaConcentration
 from compounds.models import Compound
 from django.contrib import messages
 
@@ -18,19 +18,17 @@ def get_compound_type(request):
 
 
 def index(request):
-
-    # prep empty forms
-    if 'doses' not in request.session.keys():
-        request.session['doses'] = []
+    if 'doselist' not in request.session.keys():
+        request.session['doselist'] = []
 
     if request.user.is_authenticated:
         doses_queryset = Dose.objects.filter(user__in=[request.user.id])
         doses_ids = doses_queryset.values_list('id', flat=True)
-        doses = list(doses_ids)
-    else:
-        doses = request.session['doses']
+        request.session['doselist'] = list(doses_ids)
 
-    conc_form = PlasmaConcentrationForm(doses)
+
+    if 'cumulative_doses' not in request.session.keys():
+        update_doses()
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -41,6 +39,7 @@ def index(request):
             # dose_form['dose'].choices
             # check whether it's valid:
             if dose_form.is_valid():
+                messages.success(request, message="Adding your dose")
                 dose = dose_form.cleaned_data['dose']
                 time = dose_form.cleaned_data['time']
                 duration = dose_form.cleaned_data['duration']
@@ -59,21 +58,15 @@ def index(request):
                 request.session.modified = True
 
                 doses.append(cur_model.id)
-                conc_form = PlasmaConcentrationForm(doses)
+                request = update_chart_data(request)
 
             else:
                 messages.error(request, "Invalid form")
 
-    return dose_chart(request, doses, conc_form)
+    return dose_chart(request)
 
 
-def dose_chart(request, ids, conc_form):
-    begin = time.time()
-    doses = dose_chart_data(ids)
-    end = time.time()
-
-    print(end-begin)
-
+def dose_chart(request, conc_form):
     # prep empty forms
     if 'doses' not in request.session.keys():
         request.session['doses'] = []
@@ -82,38 +75,90 @@ def dose_chart(request, ids, conc_form):
     dose_form = DoseForm()
 
     return render(request, 'plot_dose/dose_chart.html', {
-        'data': doses,
+        'data': chart_data_dict,
         'compound_type': compound_type,
         'dose_form': dose_form,
         'plasma_conc': filtered_concentration_form
     })
 
 
-def dose_chart_data(ids, output='standard_dose_unit'):
-    compounds_dose = {}
+def update_doses(request, add_doses=None, output='standard_dose_unit'):
+    doselist = request.session['doselist']
+    if 'cumulative_doses' not in request.session.keys():
+        cumulative_doses = {}
+        add_doses = list(doselist)
+    else:
+        cumulative_doses = request.session['cumulative_doses']
 
-    queryset = Dose.objects.filter(id__in=ids)
-    begin = time.time()
+
+    queryset = Dose.objects.filter(id__in=doselist)
     for dose in queryset:
-        if str(dose.compound) not in compounds_dose.keys():
-            compounds_dose[str(dose.compound)] = [dose.id]
+        if str(dose.compound) not in cumulative_doses.keys():
+            cumulative_doses[str(dose.compound)] = {
+                'single_doses' : [dose.id],
+                'cumulative_dose': None,
+                'updated': True
+            }
         else:
-            compounds_dose[str(dose.compound)].append(dose.id)
+            cumulative_doses[str(dose.compound)]['single_doses'].append(dose.id)
+            cumulative_doses[str(dose.compound)]['updated'] = True
 
-    doses = {}
-    for key, value in compounds_dose.items():
-        cur_compound = Compound.objects.filter(compound=key).select_subclasses().first()
-        comp_of_interest = cur_compound.comp_of_interest
-        cur_compound_doses, cumulative = cur_compound.dose_chart_data(value, comp_of_interest=comp_of_interest)
-        doses.update(cur_compound_doses)
-        new_list, unusable_doses = cur_compound.check_overlap(value, cur_compound_doses, key)
-        cumulative_doses = cur_compound.calc_cumulative(unusable_doses, cumulative)
-        doses.update(cumulative_doses)
+    for key, value in cumulative_doses.items():
+        if value['updated']:
+            cur_compound = Compound.objects.filter(compound=key).select_subclasses().first()
+            comp_of_interest = cur_compound.comp_of_interest
+            new_list, unusable_doses = cur_compound.check_overlap(value, cur_compound_doses, key)
+            cumulative_doses = cur_compound.calc_cumulative(unusable_doses, cumulative)
+            doses.update(cumulative_doses)
     if len(doses.keys()) > 0:
         if output == 'standard_dose_unit':
             doses = cur_compound.convert_units(doses, output)
 
-    return doses
+    return request
+
+
+
+
+
+
+
+def create_chart_data(self, id):
+    # make a dict containing compound, color, line and coords
+    dose_query = Dose.objects.get(id=id)
+    compound = str(dose_query.compound)
+    cur_compound = Compound.objects.filter(compound=compound).select_subclasses().first()
+    comp_of_interest = cur_compound.comp_of_interest
+    conc_query = PlasmaConcentration.objects.filter(dose=id, comp=comp_of_interest)
+
+    coords = list(conc_query.values('time', 'conc'))
+    for coord_dict in coords:
+        coord_dict['x'] = coord_dict.pop('time')
+        coord_dict['y'] = coord_dict.pop('conc')
+
+    chart_data = {
+        'compound': str(dose_query.compound),
+        'color': str(dose_query.compound.color),
+        'line': [10, 10],
+        'coords': coords}
+
+    return chart_data
+
+
+def create_cumulative_chart_data:
+    cumulative = {}
+    for key, dose in doses.items():
+
+        if dose['compound'] not in cumulative.keys():
+            cumulative[dose['compound']] = {
+                'compound': dose['compound'],
+                'color': dose['color'],
+                'line': [],
+                'coords': [],
+                'first_date': None,
+                'last_date': None
+            }
+
+def update_dose_chart_data(dose_chart_data, id):
 
 
 
