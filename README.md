@@ -1,8 +1,11 @@
 ## Dose
 Modelling plasma concentration for different compounds and visualizing for users.
 
-![Dose](docs/screenshot.png)  
+![Dose](docs/add_dose_preview.png)  
+   
+![Compounds](docs/compounds_preview.png)  
   
+   
 
 ### Goals
 - Implement pharmocokinetic models into python classes

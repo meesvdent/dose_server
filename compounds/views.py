@@ -3,7 +3,7 @@ from compounds.models import CompoundType, Compound
 
 
 def compound_view(request):
-    compound_types = CompoundType.objects.values('id', 'type', 'description')
+    compound_types = list(reversed(CompoundType.objects.values('id', 'type', 'description')))
 
     for compound_type in compound_types:
         compounds = {}

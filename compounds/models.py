@@ -6,7 +6,6 @@ from dose_model.helpers import trans_thalf_ke, calc_dose_conc
 from dose_model.kinetics_models import SourceOneCompFirstOrder, PietersModel
 import numpy as np
 from model_utils.managers import InheritanceManager
-from django.utils import timezone
 from math import log2
 import dose_model.models as dose_model
 from django.utils import timezone
