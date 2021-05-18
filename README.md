@@ -1,7 +1,7 @@
 ## Dose
 Modelling plasma concentration for different compounds and visualizing for users.
 
-![Dose](screenshot.png)  
+![Dose](users/docs/screenshot.png)  
   
 
 ### Goals
