@@ -2,11 +2,8 @@
 Modelling plasma concentration for different compounds and visualizing for users.
 
 ![Dose](docs/add_dose_preview.png)  
-   
-![Compounds](docs/compounds_preview.png)  
   
-   
-
+    
 ### Goals
 - Implement pharmocokinetic models into python classes
     - First order elimination
@@ -32,14 +29,15 @@ Modelling plasma concentration for different compounds and visualizing for users
     - enzymatic metabolization
     - first-pass effect
     - different compartments
+- Optimization:
+    - Calculate total plasma concentration after addition of new dose
 - Visualizations
     - Scroll through time -> better
     - "now" line -> first decide which plotting library to go with
         - https://stackoverflow.com/questions/30256695/chart-js-drawing-an-arbitrary-vertical-line
     - add "0" values for times not in sum compounds for every sum compounds in range of at least 1 month
-- Implement user model: connect to dose so only your own doses show up.
-    - automatically enter weight 
-    - make profile model with weight
+- User model:   
+    - add weight to model, automatically add after first use
 - Host server on digital ocean droplet using Docker
 - Blog with posts about pharmacokinetics and the effect of different plasma concentration levels on brain functions ["Jerkes Dodson Law"](https://en.m.wikipedia.org/wiki/Yerkes%E2%80%93Dodson_law).
     
@@ -58,7 +56,7 @@ Modelling plasma concentration for different compounds and visualizing for users
         - Compound
             - Description
             - pharmacokinetic parameters
-            - structure
+            - structure (smiles)
         - Dose
             - mass
             - time of dose
@@ -68,6 +66,9 @@ Modelling plasma concentration for different compounds and visualizing for users
             - time
             - concentration
             - Corresponding Dose
+        - User
+            - User login data
+            - Corresponding Doses
     - User interface
         - Enter data into forms
         - Visualize data
@@ -79,6 +80,6 @@ Modelling plasma concentration for different compounds and visualizing for users
     - user interface
     
     
-    
+![Compounds](docs/compounds_preview.png)    
     
 
