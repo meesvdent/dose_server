@@ -1,7 +1,8 @@
 ## Dose
 Modelling plasma concentration for different compounds and visualizing for users.
 
-# Let's go
+![Dose](screenshot.png)  
+  
 
 ### Goals
 - Implement pharmocokinetic models into python classes
@@ -13,7 +14,6 @@ Modelling plasma concentration for different compounds and visualizing for users
 
 
 ### Problems
-- Overlapping doses and ad fundum not functioning
 - How to stack multiple enzymatic compounds and visualize in fast way. 
     - Doses for first order kinetics compounds can be stacked up to form total concentration over time. 
     - Enzymatic metabolisation speed depends on substrate concentration 
@@ -29,7 +29,6 @@ Modelling plasma concentration for different compounds and visualizing for users
     - enzymatic metabolization
     - first-pass effect
     - different compartments
-    - predict hangover by modeling Acetaldehyde concentration
 - Visualizations
     - Scroll through time -> better
     - "now" line -> first decide which plotting library to go with
@@ -46,6 +45,7 @@ Modelling plasma concentration for different compounds and visualizing for users
 - Dose model (python)
     - Python class descriptions: can be called with a dose concentration and compound parameters and gives concentration over time.
         - OneCompModel: first order kinetics
+        - PietersModel: enzymatic metabolisation + renal clearance and stomach clearance
     - playground.py: off-server model testing
     - Get's fetched from github by server
 - Dose server (python-django)
@@ -68,7 +68,10 @@ Modelling plasma concentration for different compounds and visualizing for users
     - User interface
         - Enter data into forms
         - Visualize data
-    - Back end: used to enter new compounds and compound types
+    - Back end: 
+        - Enter new compounds by compound types
+        - Generates structure images from smiles
+    
 - Dose app (react native)
     - user interface
     
